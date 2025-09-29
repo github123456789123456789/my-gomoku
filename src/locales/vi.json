@@ -73,7 +73,7 @@
       "hashSize": "Kích thước bảng băm",
       "config": {
         "title": "Mô hình Engine",
-        "mix9lite": "Mix9Lite NNUE",
+        "mix9svq": "Mix9svq NNUE",
         "220723": "Đánh giá cổ điển (2022/07/23)",
         "210901": "Đánh giá cổ điển (2021/09/01)"
       },

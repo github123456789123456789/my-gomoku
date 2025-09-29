@@ -73,7 +73,7 @@
       "hashSize": "置換表大小",
       "config": {
         "title": "引擎權重",
-        "mix9lite": "Mix9Lite NNUE",
+        "mix9svq": "Mix9svq NNUE",
         "220723": "傳統（2022/07/23）",
         "210901": "傳統（2021/09/01）"
       },

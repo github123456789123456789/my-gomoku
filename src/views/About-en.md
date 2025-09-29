@@ -1,4 +1,4 @@
-## Gomoku Calculator V0.30
+## Gomoku Calculator V0.31
 
 ### FAQ
 
@@ -92,6 +92,8 @@
 
 ### Update Record
 
++ 0.31
+  + switch to mix9svq model, bug fixes
 + 0.30
   + engine update，add mix9lite model
   + more language support

@@ -73,7 +73,7 @@
       "hashSize": "Transposition Table Size",
       "config": {
         "title": "Engine Model",
-        "mix9lite": "Mix9Lite NNUE",
+        "mix9svq": "Mix9svq NNUE",
         "220723": "Classic(2022/07/23)",
         "210901": "Classic(2021/09/01)"
       },

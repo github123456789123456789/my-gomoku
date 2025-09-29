@@ -1,7 +1,7 @@
 <template>
   <div class="about markdown-body">
     <div v-if="$i18n.locale === 'zh-CN'">
-      <h2 id='五子棋计算器-v030'>五子棋计算器 V0.30</h2>
+      <h2 id='五子棋计算器-v031'>五子棋计算器 V0.31</h2>
       <h3 id='faq'>FAQ</h3>
       <ul>
         <li>
@@ -107,6 +107,12 @@
       <p>&nbsp;</p>
       <h3 id='更新记录'>更新记录</h3>
       <ul>
+        <li>
+          <p>0.31</p>
+          <ul>
+            <li>引擎更新，加入mix9svq权重</li>
+          </ul>
+        </li>
         <li>
           <p>0.30</p>
           <ul>
@@ -220,7 +226,7 @@
     </div>
 
     <div v-else-if="$i18n.locale === 'zh-TW'">
-      <h2 id='五子棋計算器-v030'>五子棋計算器 V0.30</h2>
+      <h2 id='五子棋計算器-v031'>五子棋計算器 V0.31</h2>
       <h3 id='faq'>常見問題（FAQ）</h3>
       <ul>
         <li>
@@ -326,6 +332,12 @@
       <h3 id='更新記錄'>更新記錄</h3>
       <ul>
         <li>
+          <p>0.31</p>
+          <ul>
+            <li>引擎更新，加入mix9svq權重</li>
+          </ul>
+        </li>
+        <li>
           <p>0.30</p>
           <ul>
             <li>引擎更新，加入mix9lite權重</li>
@@ -424,7 +436,7 @@
     </div>
 
     <div v-else-if="$i18n.locale === 'ko'">
-      <h2 id='오목 계산기-v030'>오목 계산기 V0.30</h2>
+      <h2 id='오목 계산기-v031'>오목 계산기 V0.31</h2>
       <h3 id='faq'>FAQ</h3>
       <ul>
         <li>
@@ -531,6 +543,12 @@
       <h3 id='업데이트-기록'>업데이트 기록</h3>
       <ul>
         <li>
+          <p>0.31</p>
+          <ul>
+            <li>엔진 업데이트, mix9svq 가중치 추가</li>
+          </ul>
+        </li>
+        <li>
           <p>0.30</p>
           <ul>
             <li>엔진 업데이트, mix9lite 가중치 추가</li>
@@ -629,7 +647,7 @@
     </div>
 
     <div v-else-if="$i18n.locale === 'ja'">
-      <h2 id='五子棋计算器-v030'>五目並べ計算機 V0.30</h2>
+      <h2 id='五子棋计算器-v031'>五目並べ計算機 V0.31</h2>
       <h3 id='faq'>FAQ</h3>
       <ul>
         <li>
@@ -744,6 +762,12 @@
       <h3 id='更新记录'>更新履歴</h3>
       <ul>
         <li>
+          <p>0.31</p>
+          <ul>
+            <li>エンジン更新、mix9svq重みを追加</li>
+          </ul>
+        </li>
+        <li>
           <p>0.30</p>
           <ul>
             <li>エンジン更新、mix9lite重みを追加</li>
@@ -842,7 +866,7 @@
     </div>
 
     <div v-else-if="$i18n.locale === 'vi'">
-      <h2 id='五子棋计算器-v030'>Máy tính Cờ Caro V0.30</h2>
+      <h2 id='五子棋计算器-v031'>Máy tính Cờ Caro V0.31</h2>
       <h3 id='faq'>Câu hỏi thường gặp (FAQ)</h3>
       <ul>
         <li>
@@ -961,6 +985,12 @@
       <h3 id='更新记录'>Lịch sử cập nhật</h3>
       <ul>
         <li>
+          <p>0.31</p>
+          <ul>
+            <li>Cập nhật engine, thêm trọng số mix9svq</li>
+          </ul>
+        </li>
+        <li>
           <p>0.30</p>
           <ul>
             <li>Cập nhật engine, thêm trọng số mix9lite</li>
@@ -1059,7 +1089,7 @@
     </div>
 
     <div v-else-if="$i18n.locale === 'ru'">
-      <h2 id='пятнашки-калькулятор-v030'>Калькулятор Гомоку V0.30</h2>
+      <h2 id='пятнашки-калькулятор-v031'>Калькулятор Гомоку V0.31</h2>
       <h3 id='faq'>Часто задаваемые вопросы (FAQ)</h3>
       <ul>
         <li>
@@ -1197,6 +1227,12 @@
       <h3 id='история-обновлений'>История обновлений</h3>
       <ul>
         <li>
+          <p>0.31</p>
+          <ul>
+            <li>Обновлен движок, добавлен вес mix9svq</li>
+          </ul>
+        </li>
+        <li>
           <p>0.30</p>
           <ul>
             <li>Обновлен движок: добавлен вес mix9lite</li>
@@ -1295,7 +1331,7 @@
     </div>
 
     <div v-else>
-      <h2 id='gomoku-calculator-v030'>Gomoku Calculator V0.30</h2>
+      <h2 id='gomoku-calculator-v031'>Gomoku Calculator V0.31</h2>
       <h3 id='faq'>FAQ</h3>
       <ul>
         <li>
@@ -1428,6 +1464,12 @@
       <p>&nbsp;</p>
       <h3 id='update-record'>Update Record</h3>
       <ul>
+        <li>
+          <p>0.31</p>
+          <ul>
+            <li>engine update, add mix9svq model</li>
+          </ul>
+        </li>
         <li>
           <p>0.30</p>
           <ul>

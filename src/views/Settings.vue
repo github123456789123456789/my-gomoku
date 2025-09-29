@@ -179,7 +179,7 @@ export default {
     configIndexOptions() {
       if (this.fullEngine) {
         return [
-          { key: 0, value: this.$t('setting.thinking.config.mix9lite') },
+          { key: 0, value: this.$t('setting.thinking.config.mix9svq') },
           { key: 1, value: this.$t('setting.thinking.config.220723') },
           { key: 2, value: this.$t('setting.thinking.config.210901') },
         ]

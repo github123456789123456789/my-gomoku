@@ -73,7 +73,7 @@
       "hashSize": "해시 테이블 크기",
       "config": {
         "title": "엔진 가중치",
-        "mix9lite": "Mix9Lite NNUE",
+        "mix9svq": "Mix9svq NNUE",
         "220723": "전통 (2022/07/23)",
         "210901": "전통 (2021/09/01)"
       },
