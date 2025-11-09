@@ -1,0 +1,13 @@
+# netlify.toml
+
+# 1. 빌드 설정
+[build]
+  command = "npm run build"  # 빌드 명령어
+  publish = "dist"           # 빌드 결과 폴더
+
+# 2. 멀티 스레드를 위한 특수 헤더 설정 (가장 중요)
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cross-Origin-Opener-Policy = "same-origin"
+    Cross-Origin-Embedder-Policy = "require-corp"
