@@ -306,18 +306,12 @@ function drawRealtime(ctx, style, cs, moves, position, pv, nbest, forbid) {
     }
   }
   
-  // 겹쳐지는 것을 방지하기 위해 이미 그린 위치 추적
-  const drawnPositions = new Set()
+  // 같은 위치의 수들을 그룹화하고, 각 위치에서 가장 좋은 eval을 가진 수만 표시
+  // 이렇게 하면 같은 위치에 여러 수가 있어도 가장 좋은 것만 표시되고, 수가 사라지지 않음
+  const positionMap = new Map() // posKey -> { index, eval, evalObj, candidatePos }
   
-  ctx.save()
-  ctx.translate(paddingX + cs / 2, paddingTop + cs / 2)
-  ctx.scale(cs, cs)
-
-  // 바둑돌과 같은 크기의 동그라미 그리기
-  let radius = style.pieceScale / 2
-  
-  // 여러 후보를 역순으로 그리기 (나중에 그린 것이 위에 표시되도록)
-  for (let i = candidateCount - 1; i >= 0; i--) {
+  // 먼저 모든 후보를 수집하고, 같은 위치에서는 가장 좋은 eval을 가진 것만 유지
+  for (let i = 0; i < candidateCount; i++) {
     if (!pv[i] || !pv[i].bestline || pv[i].bestline.length === 0) {
       console.log('[DEBUG] drawRealtime: Skipping pv[' + i + '] - no bestline')
       continue
@@ -333,17 +327,39 @@ function drawRealtime(ctx, style, cs, moves, position, pv, nbest, forbid) {
       continue
     }
     
-    // 겹쳐지는 것을 방지: 이미 그린 위치는 건너뛰기
-    if (drawnPositions.has(posKey)) {
-      console.log('[DEBUG] drawRealtime: Skipping pv[' + i + '] at', candidatePos, '- already drawn')
-      continue
+    const evalObj = parseEval(pv[i].eval)
+    if (evalObj === null) continue
+    
+    // 같은 위치에 이미 수가 있으면, 더 좋은 eval을 가진 것만 유지
+    if (positionMap.has(posKey)) {
+      const existing = positionMap.get(posKey)
+      if (compareEval(evalObj, existing.evalObj) > 0) {
+        // 현재 수가 더 좋음
+        positionMap.set(posKey, { index: i, eval: pv[i].eval, evalObj, candidatePos })
+      }
+      // 기존 수가 더 좋거나 같으면 유지
+    } else {
+      // 새로운 위치
+      positionMap.set(posKey, { index: i, eval: pv[i].eval, evalObj, candidatePos })
     }
+  }
+  
+  ctx.save()
+  ctx.translate(paddingX + cs / 2, paddingTop + cs / 2)
+  ctx.scale(cs, cs)
+
+  // 바둑돌과 같은 크기의 동그라미 그리기
+  let radius = style.pieceScale / 2
+  
+  // 수집된 수들을 그리기 (역순으로 그려서 나중에 그린 것이 위에 표시되도록)
+  const positionsToDraw = Array.from(positionMap.values())
+  for (let i = positionsToDraw.length - 1; i >= 0; i--) {
+    const { index, eval: evalStr, evalObj, candidatePos } = positionsToDraw[i]
     
     // eval 값을 비교하여 최고 점수인지 확인
-    const evalObj = parseEval(pv[i].eval)
     const isBest = (evalObj !== null && bestEval !== null && compareEval(evalObj, bestEval) === 0)
     
-    console.log('[DEBUG] drawRealtime: Drawing pv[' + i + '] at', candidatePos, 'eval =', pv[i].eval, 'isBest =', isBest)
+    console.log('[DEBUG] drawRealtime: Drawing pv[' + index + '] at', candidatePos, 'eval =', evalStr, 'isBest =', isBest)
     
     // 최고 점수(같은 점수 포함)는 빨간색, 나머지는 파란색
     if (isBest) {
@@ -353,7 +369,6 @@ function drawRealtime(ctx, style, cs, moves, position, pv, nbest, forbid) {
     }
     
     fillCircle(ctx, candidatePos[0], candidatePos[1], radius)
-    drawnPositions.add(posKey) // 그린 위치 기록
   }
 
   ctx.restore()
@@ -365,27 +380,11 @@ function drawRealtime(ctx, style, cs, moves, position, pv, nbest, forbid) {
   ctx.textBaseline = 'middle'
   ctx.translate(paddingX + cs / 2, paddingTop + cs / 2)
   
-  // 여러 후보의 eval 텍스트 그리기 (겹침 방지)
-  const drawnTextPositions = new Set()
-  for (let i = 0; i < candidateCount; i++) {
-    if (!pv[i] || !pv[i].bestline || pv[i].bestline.length === 0) continue
-    
-    let candidatePos = pv[i].bestline[0]
-    const posKey = `${candidatePos[0]},${candidatePos[1]}`
-    
-    const isOccupied = position.some(existingPos => existingPos[0] === candidatePos[0] && existingPos[1] === candidatePos[1])
-    if (isOccupied) continue
-    
-    // 겹쳐지는 것을 방지: 이미 텍스트를 그린 위치는 건너뛰기
-    if (drawnTextPositions.has(posKey)) continue
-    
-    let evalValue = pv[i].eval || ''
-    
-    // eval 값이 있으면 흰색으로 표시
+  // 수집된 수들의 eval 텍스트 그리기 (positionMap에 있는 것만 그리면 됨)
+  for (const { eval: evalValue, candidatePos } of positionMap.values()) {
     if (evalValue) {
       ctx.fillStyle = style.indexColorBlack // 흰색
       ctx.fillText(evalValue, cs * candidatePos[0], cs * candidatePos[1], cs * 0.95)
-      drawnTextPositions.add(posKey) // 텍스트를 그린 위치 기록
     }
   }
   

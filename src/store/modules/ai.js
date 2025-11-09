@@ -82,7 +82,22 @@ const mutations = {
     state.timeUsed = 0
   },
   addUsedTime(state) {
-    state.timeUsed += Date.now() - state.lastThinkTime
+    // lastThinkTime이 유효한지 확인 (0이 아니고, 현재 시간보다 과거여야 함)
+    if (state.lastThinkTime > 0 && state.lastThinkTime <= Date.now()) {
+      const elapsed = Date.now() - state.lastThinkTime
+      // 비정상적으로 큰 값(1시간 이상)이면 무시
+      if (elapsed < 3600000) { // 1시간 = 3600000ms
+        state.timeUsed += elapsed
+        console.log('[DEBUG] addUsedTime: Added', elapsed, 'ms, total timeUsed =', state.timeUsed)
+      } else {
+        console.warn('[WARNING] addUsedTime: Abnormal elapsed time detected:', elapsed, 'ms, ignoring')
+      }
+    } else {
+      console.warn('[WARNING] addUsedTime: Invalid lastThinkTime:', state.lastThinkTime, 'skipping time addition')
+    }
+    // CRITICAL: addUsedTime 호출 후 lastThinkTime을 리셋하여 중복 계산 방지
+    // 이렇게 하지 않으면 다음 addUsedTime 호출 시 큰 값이 더해질 수 있음
+    state.lastThinkTime = 0
   },
   setThinkStartTime(state) {
     state.lastThinkTime = Date.now()
@@ -228,7 +243,12 @@ const actions = {
       } else if (r.totalnodes) {
         commit('setOutput', { key: 'nodes', value: r.totalnodes })
       } else if (r.totaltime) {
-        commit('setOutput', { key: 'time', value: r.totaltime })
+        // 비정상적으로 큰 totaltime 값 필터링 (1시간 = 3600000ms 이상이면 무시)
+        if (r.totaltime < 3600000) {
+          commit('setOutput', { key: 'time', value: r.totaltime })
+        } else {
+          console.warn('[WARNING] ai/engine callback: Abnormal totaltime value:', r.totaltime, 'ms, ignoring')
+        }
       } else if (r.speed) {
         commit('setOutput', { key: 'speed', value: r.speed })
       } else if (r.eval) {
