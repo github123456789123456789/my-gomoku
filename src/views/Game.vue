@@ -3,32 +3,32 @@
     <div class="board-box">
       <Board ref="board" :is-ai-turn="isAITurn" :preview-pv="previewPv" @clicked="clicked"></Board>
 
-      <div class="button-box">
-        <scroller lock-y :scrollbar-x="$store.state.screenWidth < buttonBarWidth" :bounce="false">
-          <div class="button-box" :style="{ width: `${buttonBarWidth}px` }">
-            <flexbox :gutter="0">
+      <div class="button-box" :class="{ 'mobile': isMobile }">
+        <scroller lock-y :scrollbar-x="!isMobile && $store.state.screenWidth < buttonBarWidth" :bounce="false">
+          <div class="button-box-inner" :style="{ width: isMobile ? 'auto' : `${buttonBarWidth}px` }">
+            <flexbox :gutter="isMobile ? 8 : 0" justify="center">
               <flexbox-item>
-                <x-button @click.native="newGame" style="padding: 0">
+                <x-button @click.native="newGame" :class="{ 'mobile-button': isMobile }">
                   <i class="fa fa-file-o" aria-hidden="true"></i>
                 </x-button>
               </flexbox-item>
               <flexbox-item>
-                <x-button :disabled="position.length == 0 || navigationButtonsDisabled" style="padding: 0" @click.native="handleBackToBegin">
+                <x-button :disabled="position.length == 0 || navigationButtonsDisabled" :class="{ 'mobile-button': isMobile }" @click.native="handleBackToBegin">
                   <i class="fa fa-angle-double-left fa-lg" aria-hidden="true"></i>
                 </x-button>
               </flexbox-item>
               <flexbox-item>
-                <x-button :disabled="position.length == 0 || navigationButtonsDisabled" style="padding: 0" @click.native="handleBackward">
+                <x-button :disabled="position.length == 0 || navigationButtonsDisabled" :class="{ 'mobile-button': isMobile }" @click.native="handleBackward">
                   <i class="fa fa-angle-left fa-lg" aria-hidden="true"></i>
                 </x-button>
               </flexbox-item>
               <flexbox-item>
-                <x-button :disabled="position.length == lastPosition.length || navigationButtonsDisabled" style="padding: 0" @click.native="handleForward">
+                <x-button :disabled="position.length == lastPosition.length || navigationButtonsDisabled" :class="{ 'mobile-button': isMobile }" @click.native="handleForward">
                   <i class="fa fa-angle-right fa-lg" aria-hidden="true"></i>
                 </x-button>
               </flexbox-item>
               <flexbox-item>
-                <x-button :disabled="position.length == lastPosition.length || navigationButtonsDisabled" style="padding: 0" @click.native="handleForwardToEnd">
+                <x-button :disabled="position.length == lastPosition.length || navigationButtonsDisabled" :class="{ 'mobile-button': isMobile }" @click.native="handleForwardToEnd">
                   <i class="fa fa-angle-double-right fa-lg" aria-hidden="true"></i>
                 </x-button>
               </flexbox-item>
@@ -40,12 +40,12 @@
 
     <load-more :show-loading="false" background-color="#fbf9fe" class="seperator"></load-more>
 
-    <div class="info-box" :style="showAnalysis ? {} : { display: 'none' }">
-      <div style="max-width: 600px; margin: 0 auto;">
+    <div class="info-box" :class="{ 'mobile': isMobile }" :style="showAnalysis ? {} : { display: 'none' }">
+      <div class="info-box-inner" :class="{ 'mobile': isMobile }">
 
         <!-- 单点分析的信息输出 -->
-        <div v-if="nbest == 1" style="border: 1px solid #e5e5e5; border-collapse: collapse; background-color: #fff;">
-          <x-table :cell-bordered="true" style="background-color: #fff; line-height: 210%; table-layout: fixed; width: 100%; max-width: 600px; border-collapse: collapse;">
+        <div v-if="nbest == 1" class="table-container" :class="{ 'mobile': isMobile }">
+          <x-table :cell-bordered="true" class="info-table" :class="{ 'mobile': isMobile }">
             <thead>
               <tr style="background-color: #f7f7f7">
                 <th style="width: 80px;">{{ $t('game.info.depth') }}</th>
@@ -64,7 +64,7 @@
                 <td style="width: 80px;">{{ getTimeText(outputs.time) }}</td>
               </tr>
               <tr>
-                <td colspan="5" style="height: 100px; overflow-y: auto; width: 100%; max-width: 600px; border-top: 1px solid #e5e5e5;">
+                <td colspan="5" class="bestline-cell">
                   <flexbox align="stretch" :gutter="0" style="padding: 5px">
                     <flexbox-item style="
                         padding: 2px 10px 2px 0;
@@ -86,8 +86,8 @@
         </div>
 
         <!-- 多点分析的信息输出 -->
-        <div v-else>
-          <x-table :cell-bordered="true" style="background-color: #fff; line-height: 210%; table-layout: fixed; width: 100%; max-width: 600px;">
+        <div v-else class="table-container" :class="{ 'mobile': isMobile }">
+          <x-table :cell-bordered="true" class="info-table" :class="{ 'mobile': isMobile }">
             <thead>
               <tr style="background-color: #f7f7f7">
                 <th style="width: 100px;">{{ $t('game.info.speed') }}</th>
@@ -103,7 +103,7 @@
               </tr>
             </tbody>
           </x-table>
-          <x-table :cell-bordered="true" style="background-color: #fff; line-height: 210%; table-layout: fixed; width: 100%; max-width: 600px;">
+          <x-table :cell-bordered="true" class="info-table" :class="{ 'mobile': isMobile }">
             <thead>
               <tr style="background-color: #f7f7f7">
                 <th style="width: 50px;">{{ $t('game.info.nbestIndex') }}</th>
@@ -114,12 +114,12 @@
             </thead>
             <tbody>
               <tr v-for="i in Math.min(nbest, outputs.pv.length)" :key="i">
-                <td style="width: 50px; height: 100px;">{{ i }}</td>
-                <td style="width: 80px; height: 100px;">
+                <td style="width: 50px;" class="bestline-cell">{{ i }}</td>
+                <td style="width: 80px;" class="bestline-cell">
                   {{ outputs.pv[i - 1].depth + '-' + outputs.pv[i - 1].seldepth }}
                 </td>
-                <td style="font-weight: bold; width: 80px; height: 100px;">{{ outputs.pv[i - 1].eval }}</td>
-                <td style="height: 100px; overflow-y: auto; overflow-wrap: break-word; word-break: break-all;">
+                <td style="font-weight: bold; width: 80px;" class="bestline-cell">{{ outputs.pv[i - 1].eval }}</td>
+                <td class="bestline-cell" style="overflow-y: auto; overflow-wrap: break-word; word-break: break-all;">
                   <div style="line-height: 1.6;">
                     <Bestline :bestline="outputs.pv[i - 1].bestline" :boardSize="boardSize"
                       v-on:pvPreview="(pv) => (previewPv = pv)" v-on:pvSet="setPvAsPosition"></Bestline>
@@ -131,7 +131,7 @@
         </div>
       </div>
 
-      <group style="max-width: 600px;">
+      <group class="position-group" :class="{ 'mobile': isMobile }">
         <group-title slot="title">
           {{ $t('game.currentPos') }}
           <span v-if="clipboardAvailable" style="float:right;">
@@ -141,7 +141,7 @@
           </span>
         </group-title>
         <x-textarea ref="curposArea" :value="posStr" @on-change="(v) => { setPosStr(v) }" 
-          style="padding: 5px 12px; height: 80px; width: 100%; overflow-y: auto; box-sizing: border-box; resize: none;"
+          class="position-textarea" :class="{ 'mobile': isMobile }"
           :show-counter="false" :rows="3"></x-textarea>
       </group>
 
@@ -218,11 +218,18 @@ export default {
     ...mapGetters('ai', ['bestlineStr', 'bestline']),
     ...mapGetters('position', ['isEmpty', 'playerToMove', 'moveLeftCount', 'posStr']),
     buttonBarWidth() {
+      // 스마트폰에서는 버튼 너비를 훨씬 작게 (약 1/4)
+      if (this.screenWidth < 768) {
+        return 150 // 스마트폰: 5개 버튼이 작게 배치
+      }
       const Width = 620
       if (this.screenWidth >= 1024)
         return Math.min(Width, Width + Math.max(0, this.screenWidth - 1024))
       else
         return Width
+    },
+    isMobile() {
+      return this.screenWidth < 768
     },
     bestline() {
       return this.bestlineStr(0)
@@ -844,6 +851,218 @@ export default {
 /* Ensure bestline row border is always visible */
 .info-box table tbody tr:last-child td {
   border-top: 1px solid #e5e5e5 !important;
+}
+
+/* 기본 테이블 스타일 */
+.info-table {
+  background-color: #fff;
+  line-height: 210%;
+  table-layout: fixed;
+  width: 100%;
+  max-width: 600px;
+  border-collapse: collapse;
+}
+
+.table-container {
+  border: 1px solid #e5e5e5;
+  border-collapse: collapse;
+  background-color: #fff;
+}
+
+.info-box-inner {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.bestline-cell {
+  height: 100px;
+  overflow-y: auto;
+  width: 100%;
+  max-width: 600px;
+  border-top: 1px solid #e5e5e5;
+}
+
+.position-group {
+  max-width: 600px;
+}
+
+.position-textarea {
+  padding: 5px 12px;
+  height: 80px;
+  width: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+  resize: none;
+}
+
+/* 스마트폰 반응형 스타일 */
+@media (max-width: 767px) {
+  /* 버튼 박스 스타일 */
+  .button-box.mobile {
+    display: flex;
+    justify-content: center;
+    margin: 10px auto;
+  }
+
+  .button-box-inner {
+    width: auto !important;
+    max-width: 100%;
+  }
+
+  .mobile-button {
+    padding: 8px 12px !important;
+    min-width: 40px !important;
+    font-size: 14px !important;
+  }
+
+  .mobile-button i {
+    font-size: 16px !important;
+  }
+
+  /* Info box 스타일 */
+  .info-box.mobile {
+    margin-left: 10px !important;
+    margin-right: 10px !important;
+    max-width: 100% !important;
+    padding: 10px 5px !important;
+  }
+
+  .info-box-inner.mobile {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+    padding: 0 5px !important;
+  }
+
+  /* 테이블 컨테이너 */
+  .table-container.mobile {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* 테이블 스타일 */
+  .info-table.mobile {
+    width: 100% !important;
+    max-width: 100% !important;
+    font-size: 12px !important;
+    line-height: 1.5 !important;
+  }
+
+  .info-table.mobile th,
+  .info-table.mobile td {
+    padding: 6px 4px !important;
+    font-size: 11px !important;
+  }
+
+  /* 단일 분석 모드 - 열 너비 조정 */
+  .info-table.mobile thead tr th:first-child,
+  .info-table.mobile tbody tr td:first-child {
+    width: 50px !important;
+    min-width: 50px !important;
+    max-width: 50px !important;
+  }
+
+  .info-table.mobile thead tr th:nth-child(2),
+  .info-table.mobile tbody tr td:nth-child(2) {
+    width: 60px !important;
+    min-width: 60px !important;
+    max-width: 60px !important;
+  }
+
+  .info-table.mobile thead tr th:nth-child(3),
+  .info-table.mobile tbody tr td:nth-child(3) {
+    width: 50px !important;
+    min-width: 50px !important;
+    max-width: 50px !important;
+  }
+
+  .info-table.mobile thead tr th:nth-child(4),
+  .info-table.mobile tbody tr td:nth-child(4) {
+    width: 50px !important;
+    min-width: 50px !important;
+    max-width: 50px !important;
+  }
+
+  .info-table.mobile thead tr th:nth-child(5),
+  .info-table.mobile tbody tr td:nth-child(5) {
+    width: 50px !important;
+    min-width: 50px !important;
+    max-width: 50px !important;
+  }
+
+  /* Bestline 행 */
+  .bestline-cell.mobile,
+  .info-table.mobile tbody tr:last-child td,
+  .info-table.mobile tbody tr td.bestline-cell {
+    height: 80px !important;
+    max-height: 80px !important;
+    font-size: 10px !important;
+    padding: 4px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* 다중 분석 모드 - 열 너비 조정 */
+  .info-table.mobile thead tr th[style*="width: 100px"] {
+    width: 70px !important;
+    min-width: 70px !important;
+    max-width: 70px !important;
+  }
+
+  .info-table.mobile tbody tr td[style*="width: 100px"] {
+    width: 70px !important;
+    min-width: 70px !important;
+    max-width: 70px !important;
+  }
+
+  .info-table.mobile thead tr th[style*="width: 50px"] {
+    width: 35px !important;
+    min-width: 35px !important;
+    max-width: 35px !important;
+  }
+
+  .info-table.mobile tbody tr td[style*="width: 50px"] {
+    width: 35px !important;
+    min-width: 35px !important;
+    max-width: 35px !important;
+  }
+
+  .info-table.mobile thead tr th[style*="width: 80px"] {
+    width: 55px !important;
+    min-width: 55px !important;
+    max-width: 55px !important;
+  }
+
+  .info-table.mobile tbody tr td[style*="width: 80px"] {
+    width: 55px !important;
+    min-width: 55px !important;
+    max-width: 55px !important;
+  }
+
+  /* Bestline 열 (마지막 열) */
+  .info-table.mobile thead tr th:last-child,
+  .info-table.mobile tbody tr td:last-child {
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  /* Position group */
+  .position-group.mobile {
+    max-width: 100% !important;
+    margin: 10px 5px !important;
+  }
+
+  .position-textarea.mobile {
+    padding: 5px 8px !important;
+    height: 70px !important;
+    width: 100% !important;
+    font-size: 12px !important;
+    box-sizing: border-box !important;
+    resize: none !important;
+  }
 }
 
 </style>
