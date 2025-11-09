@@ -1,4 +1,7 @@
 module.exports = {
+  // 빌드 시 eslint 경고를 무시 (console.log 경고 방지)
+  lintOnSave: false,
+  
   configureWebpack: (config) => {
     require('vux-loader').merge(config, {
       options: {},
@@ -47,16 +50,21 @@ module.exports = {
     },
   },
 
-  publicPath: process.env.NODE_ENV === 'production' ? '/' : '/',
+  // GitHub Pages 배포 시 리포지토리 이름에 맞게 수정하세요
+  // 예: 리포지토리가 'username/Gomocalc'라면 '/Gomocalc/'
+  // 루트 도메인(username.github.io)을 사용한다면 '/'
+  publicPath: process.env.NODE_ENV === 'production' 
+    ? (process.env.VUE_APP_BASE_URL || '/') 
+    : '/',
 
   pwa: {
-    name: 'Gomoku Calculator',
+    name: 'Rapfi',
     themeColor: '#2E86C1',
     msTileColor: '#2E86C1',
     appleMobileWebAppCapable: 'yes',
     appleMobileWebAppStatusBarStyle: 'default',
     manifestOptions: {
-      short_name: 'Gomocalc',
+      short_name: 'Rapfi',
       icons: [
         {
           src: './icon.png',
