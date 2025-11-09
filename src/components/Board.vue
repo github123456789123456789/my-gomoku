@@ -228,16 +228,48 @@ function drawRealtime(ctx, style, cs, moves, position, pv) {
   //   fillCircle(ctx, p[0], p[1], style.realtimeMoveScale)
   // }
 
+  // 바둑돌과 같은 크기의 빨간색 동그라미 그리기
+  let radius = style.pieceScale / 2
   ctx.fillStyle = style.bestMoveColor
+  
   for (let p of moves.best) {
     // Check if this position is already occupied by a stone
     const isOccupied = position.some(existingPos => existingPos[0] === p[0] && existingPos[1] === p[1])
     if (!isOccupied) {
-      // 동그라미 크기를 2배로 증가
-      fillCircle(ctx, p[0], p[1], style.bestMoveScale * 2)
+      // 바둑돌과 같은 크기의 빨간색 동그라미
+      fillCircle(ctx, p[0], p[1], radius)
     }
   }
 
+  ctx.restore()
+  
+  // eval 텍스트 그리기 (스케일 적용 전에 그리기)
+  ctx.save()
+  ctx.font = style.indexFontStyle + ' ' + (style.indexScale * cs * 0.8) + 'px ' + style.indexFontFamily
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.translate(paddingX + cs / 2, paddingTop + cs / 2)
+  
+  for (let p of moves.best) {
+    const isOccupied = position.some(existingPos => existingPos[0] === p[0] && existingPos[1] === p[1])
+    if (!isOccupied) {
+      // eval 값 찾기
+      let evalValue = ''
+      if (pv && pv.length > 0 && pv[0].bestline && pv[0].bestline.length > 0) {
+        // bestline의 첫 번째 위치와 일치하는지 확인
+        if (pv[0].bestline[0][0] === p[0] && pv[0].bestline[0][1] === p[1]) {
+          evalValue = pv[0].eval || ''
+        }
+      }
+      
+      // eval 값이 있으면 흰색으로 표시
+      if (evalValue) {
+        ctx.fillStyle = style.indexColorBlack // 흰색
+        ctx.fillText(evalValue, cs * p[0], cs * p[1], cs * 0.95)
+      }
+    }
+  }
+  
   ctx.restore()
 }
 
