@@ -7,7 +7,7 @@ export const FREESTYLE = 0,
 export const CONFIGS = ['config.toml', 'classical220723.toml', 'classical210901.toml']
 
 const state = {
-  language: null,
+  language: 'en', // Force English as default language
   boardStyle: {
     boardColor: '#F4D03F',
     lineColor: '#000000',
@@ -46,12 +46,12 @@ const state = {
     pvEvalAlpha: 0.9,
   },
   boardSize: 15,
-  thinkTimeOption: 1,
-  turnTime: 5000,
-  matchTime: 9999000,
+  thinkTimeOption: 3, // Custom mode for unlimited thinking
+  turnTime: -1, // Unlimited thinking time per turn
+  matchTime: -1, // Unlimited thinking time per match
   maxDepth: 64,
   maxNodes: 0,
-  rule: 0, // 规则: 0-无禁手 1-无禁长连不赢 2,4-有禁手 5-无禁一手交换
+  rule: 2, // Rule: RENJU (default) - 0:Freestyle 1:Standard 2:RENJU 5:Swap1
   threads: null, // 线程数
   strength: 100, // 棋力限制 (默认100%棋力)
   nbest: 1, // MultiPV多点分析
@@ -69,8 +69,8 @@ const state = {
   showLastStep: true,
   showWinline: true,
   showForbid: true,
-  aiThinkBlack: false,
-  aiThinkWhite: false,
+  aiThinkBlack: true,
+  aiThinkWhite: true,
 }
 
 const propertiesToSave = [

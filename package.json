@@ -7,7 +7,8 @@
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
     "i18n:report": "vue-cli-service i18n:report --src './src/**/*.?(js|vue)' --locales './src/locales/**/*.json'",
-    "pretty": "prettier --write \"./src/**/*.{js,vue,json}\" \"./public/index.html\""
+    "pretty": "prettier --write \"./src/**/*.{js,vue,json}\" \"./public/index.html\"",
+    "deploy": "npm run build && gh-pages -d dist"
   },
   "dependencies": {
     "core-js": "^2.6.5",
@@ -31,6 +32,7 @@
     "babel-eslint": "^10.0.1",
     "eslint": "^5.16.0",
     "eslint-plugin-vue": "^5.2.3",
+    "gh-pages": "^6.3.0",
     "less": "^3.9.0",
     "less-loader": "^5.0.0",
     "vue-cli-plugin-i18n": "^0.6.0",

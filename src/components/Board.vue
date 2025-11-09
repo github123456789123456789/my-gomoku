@@ -217,19 +217,24 @@ function drawWinline(ctx, style, cs, winline) {
   ctx.restore()
 }
 
-function drawRealtime(ctx, style, cs, moves) {
+function drawRealtime(ctx, style, cs, moves, position) {
   ctx.save()
   ctx.translate(paddingX + cs / 2, paddingTop + cs / 2)
   ctx.scale(cs, cs)
 
-  ctx.fillStyle = style.lostMoveColor
-  for (let p of moves.lost) {
-    fillCircle(ctx, p[0], p[1], style.realtimeMoveScale)
-  }
+  // Removed lost moves (white small circles)
+  // ctx.fillStyle = style.lostMoveColor
+  // for (let p of moves.lost) {
+  //   fillCircle(ctx, p[0], p[1], style.realtimeMoveScale)
+  // }
 
   ctx.fillStyle = style.bestMoveColor
   for (let p of moves.best) {
-    fillCircle(ctx, p[0], p[1], style.bestMoveScale)
+    // Check if this position is already occupied by a stone
+    const isOccupied = position.some(existingPos => existingPos[0] === p[0] && existingPos[1] === p[1])
+    if (!isOccupied) {
+      fillCircle(ctx, p[0], p[1], style.bestMoveScale)
+    }
   }
 
   ctx.restore()
@@ -453,13 +458,14 @@ export default {
       ctx.scale(this.renderRatio, this.renderRatio)
       if (!noclear) ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight)
 
-      if (this.showForbid && !this.thinking && !this.previewPv) {
+      // Always show forbid marks when enabled, regardless of thinking state
+      if (this.showForbid && !this.previewPv) {
         drawForbid(ctx, this.boardStyle, cellSize, this.forbid)
       }
 
       if (this.selecting) drawSelection(ctx, this.boardStyle, cellSize, this.selectedCoord)
       else if (!this.previewPv) {
-        if (this.showDetail) drawRealtime(ctx, this.boardStyle, cellSize, this.realtime)
+        if (this.showDetail) drawRealtime(ctx, this.boardStyle, cellSize, this.realtime, this.position)
         if (this.showPvEval > 0 && this.pv.length > 0 && this.thinking)
           drawPvEval(ctx, this.showPvEval, this.boardStyle, cellSize, this.pv)
       }
@@ -621,10 +627,20 @@ export default {
       deep: true,
     },
     realtime: {
-      handler() {
-        if (this.showDetail) this.throttledDrawRealtimeLayer()
+      handler(newVal, oldVal) {
+        // Always redraw when realtime changes, especially when best move is cleared
+        if (this.showDetail) {
+          this.drawRealtimeLayer()
+        } else {
+          // Even if showDetail is false, clear the canvas if best move was cleared
+          if (oldVal && newVal && 
+              (oldVal.best && oldVal.best.length > 0 && newVal.best && newVal.best.length === 0)) {
+            this.drawRealtimeLayer()
+          }
+        }
       },
       deep: true,
+      immediate: false,
     },
     pv: {
       handler() {

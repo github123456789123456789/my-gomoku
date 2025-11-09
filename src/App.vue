@@ -12,13 +12,12 @@
         </div>
       </div>
 
-      <view-box ref="viewBox" :body-padding-top="showHeader ? '46px' : '0'" body-padding-bottom="50px">
+      <view-box ref="viewBox" :body-padding-top="showHeader ? '46px' : '0'" body-padding-bottom="0">
         <!-- header content -->
         <x-header v-if="showHeader" slot="header" class="header-bar" :left-options="{ showBack: false }"
           :right-options="{ showMore: false }" @on-click-more="showMessages">
           {{ $t('appName') }}
-          <a v-if="route.path !== '/settings' && route.path !== '/about'" slot="right" class="needsclick"
-            @click="showMessages">
+          <a slot="right" class="needsclick" @click="showMessages">
             <i class="fa fa-list fa-lg" aria-hidden="true" style="color: #d6eaf8"></i>
           </a>
         </x-header>
@@ -27,32 +26,13 @@
         <keep-alive>
           <router-view class="router-view"></router-view>
         </keep-alive>
-
-        <!-- tabbar content -->
-        <tabbar class="app-tabber" slot="bottom" style="position: fixed">
-          <tabbar-item link="/" :selected="route.path !== '/settings' && route.path !== '/about'">
-            <x-icon slot="icon" type="ios-grid-view-outline"></x-icon>
-            <x-icon slot="icon-active" type="ios-grid-view-outline" class="tabber-icon-active"></x-icon>
-            <span slot="label">{{ $t('tabbar.game') }}</span>
-          </tabbar-item>
-          <tabbar-item link="/settings" :selected="route.path === '/settings'">
-            <x-icon slot="icon" type="ios-cog-outline"></x-icon>
-            <x-icon slot="icon-active" type="ios-cog-outline" class="tabber-icon-active"></x-icon>
-            <span slot="label">{{ $t('tabbar.settings') }}</span>
-          </tabbar-item>
-          <tabbar-item link="/about" :selected="route.path === '/about'">
-            <x-icon slot="icon" type="ios-information-outline"></x-icon>
-            <x-icon slot="icon-active" type="ios-information-outline" class="tabber-icon-active"></x-icon>
-            <span slot="label">{{ $t('tabbar.about') }}</span>
-          </tabbar-item>
-        </tabbar>
       </view-box>
     </drawer>
   </div>
 </template>
 
 <script>
-import { ViewBox, XHeader, Tabbar, TabbarItem, Drawer } from 'vux'
+import { ViewBox, XHeader, Drawer } from 'vux'
 import { mapState, mapMutations, mapActions } from 'vuex'
 import { register } from 'register-service-worker'
 
@@ -92,8 +72,6 @@ export default {
   components: {
     ViewBox,
     XHeader,
-    Tabbar,
-    TabbarItem,
     Drawer,
   },
   data: function () {
@@ -120,17 +98,27 @@ export default {
   },
   watch: {
     language(newValue) {
-      this.$i18n.locale = newValue
+      // Force English language - always override to 'en'
+      if (newValue !== 'en') {
+        this.setValue({ key: 'language', value: 'en' })
+      }
+      this.$i18n.locale = 'en'
     },
   },
   created() {
     this.getBrowserCapabilities()
     this.readCookies()
-    if (!this.language) {
-      this.setValue({ key: 'language', value: this.$i18n.locale })
-    } else {
-      this.$i18n.locale = this.language
-    }
+    // Force English language and RENJU rule after cookies are read
+    this.$nextTick(() => {
+      // Always force English language
+      this.setValue({ key: 'language', value: 'en' })
+      this.$i18n.locale = 'en'
+      // Force RENJU rule as default
+      this.setValue({ key: 'rule', value: 2 })
+      // Force AI to always think for both colors
+      this.setValue({ key: 'aiThinkBlack', value: true })
+      this.setValue({ key: 'aiThinkWhite', value: true })
+    })
   },
   mounted() {
     const _this = this

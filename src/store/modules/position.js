@@ -159,28 +159,50 @@ const actions = {
       if (state.winline.length > 0) break
     }
   },
-  makeMove({ commit, dispatch, getters, rootGetters }, pos) {
-    if (!getters.isEmpty(pos)) return false
+  makeMove({ commit, dispatch, getters, rootGetters, state }, pos) {
+    console.log('[DEBUG] position/makeMove: called with pos', pos)
+    console.log('[DEBUG] position/makeMove: current position.length =', state.position.length)
+    console.log('[DEBUG] position/makeMove: playerToMove =', getters.playerToMove)
+    if (!getters.isEmpty(pos)) {
+      console.log('[DEBUG] position/makeMove: position is not empty, returning false')
+      return false
+    }
     let checkOverline =
       rootGetters['settings/gameRule'] == STANDARD ||
       (rootGetters['settings/gameRule'] == RENJU && getters.playerToMove == 'BLACK')
+    console.log('[DEBUG] position/makeMove: committing move')
     commit('move', pos)
     commit('checkWin', checkOverline)
+    console.log('[DEBUG] position/makeMove: move committed, new position.length =', state.position.length)
     dispatch('ai/checkForbid', {}, { root: true })
     return true
   },
-  backward({ commit, dispatch }) {
-    if (state.position.length == 0) return
+  backward({ commit, dispatch, state }) {
+    console.log('[DEBUG] position/backward: called, position.length =', state.position.length)
+    if (state.position.length == 0) {
+      console.log('[DEBUG] position/backward: position is empty, returning')
+      return
+    }
     commit('undo')
+    console.log('[DEBUG] position/backward: undo committed, new position.length =', state.position.length)
     dispatch('ai/checkForbid', {}, { root: true })
   },
-  forward({ commit, dispatch, state, rootGetters }) {
-    if (state.lastPosition.length <= state.position.length) return
+  forward({ commit, dispatch, state, rootGetters, getters }) {
+    console.log('[DEBUG] position/forward: called')
+    console.log('[DEBUG] position/forward: position.length =', state.position.length)
+    console.log('[DEBUG] position/forward: lastPosition.length =', state.lastPosition.length)
+    if (state.lastPosition.length <= state.position.length) {
+      console.log('[DEBUG] position/forward: no more moves, returning')
+      return
+    }
     let checkOverline =
       rootGetters['settings/gameRule'] == STANDARD ||
       (rootGetters['settings/gameRule'] == RENJU && getters.playerToMove == 'BLACK')
-    commit('move', state.lastPosition[state.position.length])
+    const nextPos = state.lastPosition[state.position.length]
+    console.log('[DEBUG] position/forward: moving to', nextPos)
+    commit('move', nextPos)
     commit('checkWin', checkOverline)
+    console.log('[DEBUG] position/forward: move committed, new position.length =', state.position.length)
     dispatch('ai/checkForbid', {}, { root: true })
   },
   backToBegin({ dispatch, state }) {

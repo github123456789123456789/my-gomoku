@@ -13,126 +13,23 @@
                 </x-button>
               </flexbox-item>
               <flexbox-item>
-                <x-button :disabled="position.length == 0" style="padding: 0" @click.native="() => {
-                  checkThinking().then(() => {
-                    backToBegin()
-                  })
-                }
-                  ">
+                <x-button :disabled="position.length == 0 || navigationButtonsDisabled" style="padding: 0" @click.native="handleBackToBegin">
                   <i class="fa fa-angle-double-left fa-lg" aria-hidden="true"></i>
                 </x-button>
               </flexbox-item>
               <flexbox-item>
-                <x-button :disabled="position.length == 0" style="padding: 0" @click.native="() => {
-                  checkThinking().then(() => {
-                    backward()
-                    clearUsedTime()
-                  })
-                }
-                  ">
+                <x-button :disabled="position.length == 0 || navigationButtonsDisabled" style="padding: 0" @click.native="handleBackward">
                   <i class="fa fa-angle-left fa-lg" aria-hidden="true"></i>
                 </x-button>
               </flexbox-item>
               <flexbox-item>
-                <x-button :disabled="position.length == lastPosition.length" style="padding: 0" @click.native="() => {
-                  checkThinking().then(() => {
-                    forward()
-                  })
-                }
-                  ">
+                <x-button :disabled="position.length == lastPosition.length || navigationButtonsDisabled" style="padding: 0" @click.native="handleForward">
                   <i class="fa fa-angle-right fa-lg" aria-hidden="true"></i>
                 </x-button>
               </flexbox-item>
               <flexbox-item>
-                <x-button :disabled="position.length == lastPosition.length" style="padding: 0" @click.native="() => {
-                  checkThinking().then(() => {
-                    forwardToEnd()
-                  })
-                }
-                  ">
+                <x-button :disabled="position.length == lastPosition.length || navigationButtonsDisabled" style="padding: 0" @click.native="handleForwardToEnd">
                   <i class="fa fa-angle-double-right fa-lg" aria-hidden="true"></i>
-                </x-button>
-              </flexbox-item>
-              <flexbox-item>
-                <x-button v-if="!ready" style="padding: 0" @click.native="showLoading = true">
-                  <i class="fa fa-spinner fa-spin"></i>
-                </x-button>
-                <x-button v-else :disabled="thinking || gameEnded" style="padding: 0" @click.native="startThink">
-                  <i v-if="thinking" class="fa fa-cog fa-spin"></i>
-                  <i v-else class="fa fa-play" :style="{
-                    color: gameEnded ? '#145A32' : '#229954',
-                  }"></i>
-                </x-button>
-              </flexbox-item>
-              <flexbox-item>
-                <x-button :disabled="!thinking" style="padding: 0" @click.native="stop">
-                  <i class="fa fa-stop" :style="{ color: thinking ? '#E74C3C' : '#78281F' }"></i>
-                </x-button>
-              </flexbox-item>
-              <flexbox-item>
-                <x-button :disabled="thinking || !ready || gameEnded" style="padding: 0" @click.native="() => {
-                  showBalanceOptions = true
-                }
-                  ">
-                  <i class="fa fa-adjust" :style="{
-                    color: thinking || !ready || gameEnded ? '#1A5276' : '#3498DB',
-                  }"></i>
-                </x-button>
-              </flexbox-item>
-
-              <flexbox-item :span="1 / 40" style="min-width: 0px"></flexbox-item>
-
-              <flexbox-item>
-                <x-button style="padding: 0" @click.native="() => {
-                  showScreenshotOptions = true
-                }
-                  ">
-                  <i class="fa fa-picture-o" aria-hidden="true"></i>
-                </x-button>
-              </flexbox-item>
-              <flexbox-item>
-                <x-button style="padding: 0" @click.native="() => {
-                  setValue({
-                    key: 'indexOrigin',
-                    value: indexOrigin == 0 ? position.length : 0,
-                  })
-                }
-                  ">
-                  <i v-if="indexOrigin == 0" class="fa fa-info-circle" aria-hidden="true"></i>
-                  <i v-else class="fa fa-info" aria-hidden="true"></i>
-                </x-button>
-              </flexbox-item>
-
-              <flexbox-item :span="1 / 40" style="min-width: 0px"></flexbox-item>
-
-              <flexbox-item>
-                <x-button style="padding: 0" @click.native="() => {
-                  checkThinking().then(() => {
-                    rotate()
-                  })
-                }
-                  ">
-                  <i class="fa fa-repeat"></i>
-                </x-button>
-              </flexbox-item>
-              <flexbox-item>
-                <x-button style="padding: 0" @click.native="() => {
-                  checkThinking().then(() => {
-                    showFlipOptions = true
-                  })
-                }
-                  ">
-                  <i class="fa fa-exchange"></i>
-                </x-button>
-              </flexbox-item>
-              <flexbox-item>
-                <x-button style="padding: 0" @click.native="() => {
-                  checkThinking().then(() => {
-                    showMoveOptions = true
-                  })
-                }
-                  ">
-                  <i class="fa fa-arrows"></i>
                 </x-button>
               </flexbox-item>
             </flexbox>
@@ -144,88 +41,89 @@
     <load-more :show-loading="false" background-color="#fbf9fe" class="seperator"></load-more>
 
     <div class="info-box" :style="showAnalysis ? {} : { display: 'none' }">
-      <div>
-        <x-progress v-if="thinking && aiTimeUsed > 0 && turnTime != 0"
-          :percent="Math.min((100 * aiTimeUsed) / Math.min(turnTime, matchTime), 100)"
-          :show-cancel="false"></x-progress>
+      <div style="max-width: 600px; margin: 0 auto;">
 
         <!-- 单点分析的信息输出 -->
-        <x-table v-if="nbest == 1" :cell-bordered="true" style="background-color: #fff; line-height: 210%">
-          <thead>
-            <tr style="background-color: #f7f7f7">
-              <th>{{ $t('game.info.depth') }}</th>
-              <th>{{ $t('game.info.eval') }}</th>
-              <th>{{ $t('game.info.speed') }}</th>
-              <th>{{ $t('game.info.nodes') }}</th>
-              <th>{{ $t('game.info.time') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>{{ outputs.pv[0].depth + '-' + outputs.pv[0].seldepth }}</td>
-              <td style="font-weight: bold">{{ outputs.pv[0].eval }}</td>
-              <td>{{ getSpeedText(outputs.speed) }}</td>
-              <td>{{ getNodesText(outputs.nodes) }}</td>
-              <td>{{ getTimeText(outputs.time) }}</td>
-            </tr>
-            <tr>
-              <td colspan="5">
-                <flexbox align="stretch" :gutter="0" style="padding: 5px">
-                  <flexbox-item style="
-                      padding: 2px 10px 2px 0;
-                      width: initial;
-                      line-height: initial;
-                      flex: none;
-                    ">
-                    {{ $t('game.info.bestline') }}
-                  </flexbox-item>
-                  <flexbox-item>
-                    <Bestline :bestline="outputs.pv[0].bestline" :boardSize="boardSize"
-                      v-on:pvPreview="(pv) => (previewPv = pv)" v-on:pvSet="setPvAsPosition"></Bestline>
-                  </flexbox-item>
-                </flexbox>
-              </td>
-            </tr>
-          </tbody>
-        </x-table>
-
-        <!-- 多点分析的信息输出 -->
-        <div v-else>
-          <x-table :cell-bordered="true" style="background-color: #fff; line-height: 210%">
+        <div v-if="nbest == 1" style="border: 1px solid #e5e5e5; border-collapse: collapse; background-color: #fff;">
+          <x-table :cell-bordered="true" style="background-color: #fff; line-height: 210%; table-layout: fixed; width: 100%; max-width: 600px; border-collapse: collapse;">
             <thead>
               <tr style="background-color: #f7f7f7">
-                <th>{{ $t('game.info.speed') }}</th>
-                <th>{{ $t('game.info.nodes') }}</th>
-                <th>{{ $t('game.info.time') }}</th>
+                <th style="width: 80px;">{{ $t('game.info.depth') }}</th>
+                <th style="width: 80px;">{{ $t('game.info.eval') }}</th>
+                <th style="width: 80px;">{{ $t('game.info.speed') }}</th>
+                <th style="width: 80px;">{{ $t('game.info.nodes') }}</th>
+                <th style="width: 80px;">{{ $t('game.info.time') }}</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>{{ getSpeedText(outputs.speed) }}</td>
-                <td>{{ getNodesText(outputs.nodes) }}</td>
-                <td>{{ getTimeText(outputs.time) }}</td>
+                <td style="width: 80px;">{{ outputs.pv[0].depth + '-' + outputs.pv[0].seldepth }}</td>
+                <td style="font-weight: bold; width: 80px;">{{ outputs.pv[0].eval }}</td>
+                <td style="width: 80px;">{{ getSpeedText(outputs.speed) }}</td>
+                <td style="width: 80px;">{{ getNodesText(outputs.nodes) }}</td>
+                <td style="width: 80px;">{{ getTimeText(outputs.time) }}</td>
+              </tr>
+              <tr>
+                <td colspan="5" style="height: 100px; overflow-y: auto; width: 100%; max-width: 600px; border-top: 1px solid #e5e5e5;">
+                  <flexbox align="stretch" :gutter="0" style="padding: 5px">
+                    <flexbox-item style="
+                        padding: 2px 10px 2px 0;
+                        width: initial;
+                        line-height: initial;
+                        flex: none;
+                      ">
+                      {{ $t('game.info.bestline') }}
+                    </flexbox-item>
+                    <flexbox-item style="overflow-wrap: break-word; word-break: break-all; line-height: 1.6;">
+                      <Bestline :bestline="outputs.pv[0].bestline" :boardSize="boardSize"
+                        v-on:pvPreview="(pv) => (previewPv = pv)" v-on:pvSet="setPvAsPosition"></Bestline>
+                    </flexbox-item>
+                  </flexbox>
+                </td>
               </tr>
             </tbody>
           </x-table>
-          <x-table :cell-bordered="true" style="background-color: #fff; line-height: 210%">
+        </div>
+
+        <!-- 多点分析的信息输出 -->
+        <div v-else>
+          <x-table :cell-bordered="true" style="background-color: #fff; line-height: 210%; table-layout: fixed; width: 100%; max-width: 600px;">
             <thead>
               <tr style="background-color: #f7f7f7">
-                <th>{{ $t('game.info.nbestIndex') }}</th>
-                <th>{{ $t('game.info.depth') }}</th>
-                <th>{{ $t('game.info.eval') }}</th>
+                <th style="width: 100px;">{{ $t('game.info.speed') }}</th>
+                <th style="width: 100px;">{{ $t('game.info.nodes') }}</th>
+                <th style="width: 100px;">{{ $t('game.info.time') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="width: 100px;">{{ getSpeedText(outputs.speed) }}</td>
+                <td style="width: 100px;">{{ getNodesText(outputs.nodes) }}</td>
+                <td style="width: 100px;">{{ getTimeText(outputs.time) }}</td>
+              </tr>
+            </tbody>
+          </x-table>
+          <x-table :cell-bordered="true" style="background-color: #fff; line-height: 210%; table-layout: fixed; width: 100%; max-width: 600px;">
+            <thead>
+              <tr style="background-color: #f7f7f7">
+                <th style="width: 50px;">{{ $t('game.info.nbestIndex') }}</th>
+                <th style="width: 80px;">{{ $t('game.info.depth') }}</th>
+                <th style="width: 80px;">{{ $t('game.info.eval') }}</th>
                 <th>{{ $t('game.info.bestline') }}</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="i in Math.min(nbest, outputs.pv.length)" :key="i">
-                <td style="min-width: 40px">{{ i }}</td>
-                <td style="min-width: 55px">
+                <td style="width: 50px; height: 100px;">{{ i }}</td>
+                <td style="width: 80px; height: 100px;">
                   {{ outputs.pv[i - 1].depth + '-' + outputs.pv[i - 1].seldepth }}
                 </td>
-                <td style="font-weight: bold; min-width: 55px">{{ outputs.pv[i - 1].eval }}</td>
-                <td>
-                  <Bestline :bestline="outputs.pv[i - 1].bestline" :boardSize="boardSize"
-                    v-on:pvPreview="(pv) => (previewPv = pv)" v-on:pvSet="setPvAsPosition"></Bestline>
+                <td style="font-weight: bold; width: 80px; height: 100px;">{{ outputs.pv[i - 1].eval }}</td>
+                <td style="height: 100px; overflow-y: auto; overflow-wrap: break-word; word-break: break-all;">
+                  <div style="line-height: 1.6;">
+                    <Bestline :bestline="outputs.pv[i - 1].bestline" :boardSize="boardSize"
+                      v-on:pvPreview="(pv) => (previewPv = pv)" v-on:pvSet="setPvAsPosition"></Bestline>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -233,83 +131,20 @@
         </div>
       </div>
 
-      <group>
+      <group style="max-width: 600px;">
         <group-title slot="title">
           {{ $t('game.currentPos') }}
           <span v-if="clipboardAvailable" style="float:right;">
             <button class="icon-button" @click="copyPosStrToClipboard">
               <i class="fa fa-files-o" aria-hidden="true"></i>
             </button>
-            <button class="icon-button" @click="pastePosStrFromClipboard">
-              <i class="fa fa-clipboard" aria-hidden="true"></i>
-            </button>
           </span>
         </group-title>
-        <x-textarea ref="curposArea" :value="posStr" @on-change="(v) => { setPosStr(v) }" style="padding: 5px 12px"
-          :show-counter="false" :rows="1" autosize></x-textarea>
+        <x-textarea ref="curposArea" :value="posStr" @on-change="(v) => { setPosStr(v) }" 
+          style="padding: 5px 12px; height: 80px; width: 100%; overflow-y: auto; box-sizing: border-box; resize: none;"
+          :show-counter="false" :rows="3"></x-textarea>
       </group>
 
-      <group :title="$t('game.evalChart')">
-        <div :style="{ width: chartWidth + 'px', height: chartWidth * 0.6 + 'px' }">
-          <v-chart ref="chart" :data="evalData" :width="chartWidth" :height="chartWidth * 0.6">
-            <v-scale ref="chartx" x :tick-interval="2" />
-            <v-scale y alias="eval" :tick-count="5" />
-            <v-point :style="{ stroke: '#fff', lineWidth: 1 }" :size="5" shape="smooth" series-field="piece" />
-            <v-line shape="smooth" series-field="piece" />
-            <v-area shape="smooth" series-field="piece" />
-          </v-chart>
-        </div>
-      </group>
-    </div>
-
-    <div v-transfer-dom>
-      <actionsheet v-model="showBalanceOptions" :menus="balanceOptions" @on-click-menu="(key) => {
-        if (key == 0 || key == 1) this.startThinkBalance(key + 1)
-      }
-        " show-cancel :cancel-text="$t('common.cancel')"></actionsheet>
-    </div>
-
-    <div v-transfer-dom>
-      <actionsheet v-model="showFlipOptions" :menus="flipOptions" @on-click-menu="onFlipOption" show-cancel
-        :cancel-text="$t('common.cancel')"></actionsheet>
-    </div>
-
-    <div v-transfer-dom>
-      <actionsheet v-model="showMoveOptions" :menus="moveOptions" @on-click-menu="onMoveOption" show-cancel
-        :cancel-text="$t('common.cancel')"></actionsheet>
-    </div>
-
-    <div v-transfer-dom>
-      <actionsheet v-model="showScreenshotOptions" :menus="shotOptions" @on-click-menu="onScreenshotOption" show-cancel
-        :cancel-text="$t('common.cancel')"></actionsheet>
-    </div>
-
-    <div v-transfer-dom>
-      <popup v-model="showScreenshot" style="height: 50%" is-transparent>
-        <div class="screenshot-box">
-          <span v-if="gifLoading">
-            {{ $t('game.gifLoading') }}
-            <i class="fa fa-spinner fa-pulse fa-lg" aria-hidden="true" />
-          </span>
-          <img ref="screenshot" class="screenshot-img" />
-          <x-button v-if="!gifLoading" type="primary" :disabled="isOnIOSBrowser" :plain="isOnIOSBrowser"
-            :text="isOnIOSBrowser ? $t('game.saveScreenshotIOS') : $t('game.saveScreenshot')"
-            @click.native="saveScreenshot"></x-button>
-        </div>
-      </popup>
-    </div>
-
-    <div v-transfer-dom>
-      <x-dialog v-model="showLoading" hide-on-blur>
-        <div style="margin:20px auto;">{{ $t('game.engineLoading') }}</div>
-        <x-circle style="width: 100px;height: 100px;margin: 20px auto;" :percent="loadingProgress * 100"
-          :stroke-width="6" :trail-width="6">
-          <span style="color:#36D1DC">{{ Math.floor(loadingProgress * 10000) / 100 }}%</span>
-        </x-circle>
-        <div style="margin:10px auto;" @click="showLoading = false">
-          <span class="vux-close"></span>
-        </div>
-      </x-dialog>
     </div>
   </div>
 </template>
@@ -324,19 +159,8 @@ import {
   LoadMore,
   XTable,
   XTextarea,
-  Actionsheet,
-  XProgress,
   Group,
   GroupTitle,
-  Popup,
-  VChart,
-  VPoint,
-  VLine,
-  VScale,
-  VArea,
-  XDialog,
-  XCircle,
-  dateFormat,
 } from 'vux'
 import Board from '@/components/Board.vue'
 import Bestline from '@/components/Bestline.vue'
@@ -359,42 +183,26 @@ export default {
     LoadMore,
     XTable,
     XTextarea,
-    Actionsheet,
-    XProgress,
     Group,
     GroupTitle,
-    Popup,
-    VChart,
-    VPoint,
-    VLine,
-    VScale,
-    VArea,
-    XDialog,
-    XCircle,
   },
   data: function () {
     return {
       aiTimeUsed: 0,
-      showLoading: false,
-      showBalanceOptions: false,
-      showFlipOptions: false,
-      showMoveOptions: false,
-      showScreenshotOptions: false,
-      showScreenshot: false,
       console: console,
       evalData: [
         { index: 0, eval: 0, piece: this.$t('game.black') },
         { index: 0, eval: 0, piece: this.$t('game.white') },
       ],
       thinkingCanceled: false,
-      gifLoading: false,
-      screenshotData: null,
       previewPv: null,
+      navigationButtonsDisabled: false, // Prevent button spamming
+      moveDisabled: false, // Prevent move spamming
       clipboardAvailable: navigator.clipboard && window.isSecureContext
     }
   },
   computed: {
-    ...mapState(['screenWidth', 'screenHeight', 'isOnIOSBrowser']),
+    ...mapState(['screenWidth', 'screenHeight']),
     ...mapState('settings', [
       'boardSize',
       'indexOrigin',
@@ -416,45 +224,8 @@ export default {
       else
         return Width
     },
-    chartWidth() {
-      if (this.screenWidth >= 1024 && this.screenWidth / this.screenHeight >= 4 / 3) {
-        const MarginSum = 30 + 2 * Math.min(20, Math.max(0, 0.3 * this.screenWidth - 350))
-        const MaxWidth = 600
-
-        return Math.min(
-          this.screenWidth -
-          Math.max(this.$store.getters.boardCanvasWidth, this.buttonBarWidth) -
-          MarginSum,
-          MaxWidth
-        )
-      } else {
-        return this.screenWidth
-      }
-    },
     bestline() {
       return this.bestlineStr(0)
-    },
-    balanceOptions() {
-      return [this.$t('game.balance1'), this.$t('game.balance2')]
-    },
-    flipOptions() {
-      return [
-        this.$t('game.flip') + ' |',
-        this.$t('game.flip') + ' -',
-        this.$t('game.flip') + ' ╲',
-        this.$t('game.flip') + ' ╱',
-      ]
-    },
-    moveOptions() {
-      return [
-        this.$t('game.move') + ' ↑',
-        this.$t('game.move') + ' ↓',
-        this.$t('game.move') + ' ←',
-        this.$t('game.move') + ' →',
-      ]
-    },
-    shotOptions() {
-      return [this.$t('game.shotJpg'), this.$t('game.shotGif')]
     },
     isAITurn() {
       return (
@@ -472,7 +243,7 @@ export default {
       setSwaped: 'setSwaped',
     }),
     ...mapMutations('settings', ['setValue']),
-    ...mapMutations('ai', ['clearUsedTime']),
+    ...mapMutations('ai', ['clearUsedTime', 'clearRealtime']),
     ...mapActions('position', [
       'setPosStr',
       'makeMove',
@@ -503,192 +274,298 @@ export default {
       })
     },
 
-    onFlipOption(key) {
-      switch (key) {
-        case 0:
-          this.flip([1, 0])
-          break
-        case 1:
-          this.flip([0, 1])
-          break
-        case 2:
-          this.flip([0, 0])
-          break
-        case 3:
-          this.flip([1, 1])
-          break
-      }
+    stopAIAndSync() {
+      console.log('[DEBUG] stopAIAndSync() called, thinking:', this.thinking)
+      // Always clear best move when board state is changing
+      this.clearRealtime('best')
+      this.clearRealtime('lost')
+      console.log('[DEBUG] stopAIAndSync: Cleared best move')
+      
+      return new Promise((resolve) => {
+        if (this.thinking) {
+          console.log('[DEBUG] AI is thinking, stopping...')
+          this.thinkingCanceled = true
+          this.stop()
+          // Wait a bit to ensure AI fully stops and state is cleared
+          // This is critical for board state synchronization when AI is active
+          setTimeout(() => {
+            this.thinkingCanceled = false
+            console.log('[DEBUG] AI stopped, resolving promise')
+            // Force restart flag to ensure fresh board state is sent
+            this.restart()
+            resolve()
+          }, 100)  // Reduced from 200ms to 100ms for better responsiveness
+        } else {
+          console.log('[DEBUG] AI not thinking, resolving immediately')
+          // No delay needed when AI is not thinking - instant response!
+          this.restart()
+          resolve()
+        }
+      })
     },
 
-    onMoveOption(key) {
-      switch (key) {
-        case 0:
-          this.moveTowards([0, -1])
-          break
-        case 1:
-          this.moveTowards([0, 1])
-          break
-        case 2:
-          this.moveTowards([-1, 0])
-          break
-        case 3:
-          this.moveTowards([1, 0])
-          break
-      }
+    autoStartAI() {
+      // Auto-start AI if it's AI's turn and game hasn't ended
+      // This is called after board state changes to ensure AI analyzes the new position
+      console.log('[DEBUG] autoStartAI() called')
+      console.log('[DEBUG] - isAITurn:', this.isAITurn)
+      console.log('[DEBUG] - gameEnded:', this.gameEnded)
+      console.log('[DEBUG] - ready:', this.ready)
+      console.log('[DEBUG] - playerToMove:', this.playerToMove)
+      console.log('[DEBUG] - aiThinkBlack:', this.aiThinkBlack)
+      console.log('[DEBUG] - aiThinkWhite:', this.aiThinkWhite)
+      console.log('[DEBUG] - position.length:', this.position.length)
+      console.log('[DEBUG] - thinking:', this.thinking)
+      
+      // Wait a bit to ensure board state is fully updated
+      this.$nextTick(() => {
+        if (this.isAITurn && !this.gameEnded && this.ready && !this.thinking) {
+          console.log('[DEBUG] All conditions met, calling startThink() after nextTick')
+          this.startThink()
+        } else {
+          console.log('[DEBUG] Conditions not met, NOT starting AI:')
+          if (!this.isAITurn) console.log('[DEBUG]   - isAITurn is false')
+          if (this.gameEnded) console.log('[DEBUG]   - gameEnded is true')
+          if (!this.ready) console.log('[DEBUG]   - ready is false')
+          if (this.thinking) console.log('[DEBUG]   - thinking is true (AI still running)')
+        }
+      })
     },
 
-    onScreenshotOption(key) {
-      let _this = this
-      let delayPrompt = this.$t('game.gifDelay')
-      let startIndex, delay
-      switch (key) {
-        case 0:
-          this.screenshotData = { url: this.$refs.board.screenshot(), ext: 'jpg' }
-          this.$refs.screenshot.setAttribute('src', this.screenshotData.url)
-          this.showScreenshot = true
-          break
-        case 1:
-          _this.$vux.confirm.prompt_i18n('', {
-            title: this.$t('game.gifStart'),
-            inputAttrs: { type: 'number', min: 1, max: this.position.length },
-            onShow() {
-              _this.$vux.confirm.setInputValue('1')
-            },
-            onConfirm(v) {
-              startIndex = +v
-              if (isNaN(startIndex)) startIndex = 1
-              startIndex = Math.max(0, Math.min(startIndex - 1, _this.position.length))
-              _this.$vux.confirm.prompt_i18n('', {
-                title: delayPrompt,
-                inputAttrs: { type: 'number', min: 100 },
-                onShow() {
-                  _this.$vux.confirm.setInputValue('1000')
-                },
-                onConfirm(v) {
-                  delay = +v
-                  if (isNaN(delay)) delay = 1000
-                  delay = Math.max(100, delay)
-                  _this.gifLoading = true
-                  _this.$refs.screenshot.setAttribute('src', '')
-                  _this.showScreenshot = true
-                  _this.$refs.board.exportGIF(startIndex, delay, (blob) => {
-                    _this.gifLoading = false
-                    _this.screenshotData = { url: URL.createObjectURL(blob), ext: 'gif' }
-                    _this.$refs.screenshot.setAttribute('src', _this.screenshotData.url)
-                  })
-                },
-              })
-            },
-          })
-          break
-      }
-    },
-    saveScreenshot() {
-      function downloadBlobURL(blobUrl, name) {
-        // Create a link element
-        const link = document.createElement('a')
-
-        // Set link's href to point to the Blob URL
-        link.href = blobUrl
-        link.download = name
-
-        // Append link to the body
-        document.body.appendChild(link)
-
-        // Dispatch click event on the link
-        // This is necessary as link.click() does not work on the latest firefox
-        link.dispatchEvent(
-          new MouseEvent('click', {
-            bubbles: true,
-            cancelable: true,
-            view: window,
-          })
-        )
-
-        // Remove link from body
-        document.body.removeChild(link)
-      }
-
-      downloadBlobURL(
-        this.screenshotData.url,
-        `screenshot-${dateFormat(new Date(), 'YYYYMMDDHHmmss')}.${this.screenshotData.ext}`
-      )
-    },
 
     newGame() {
-      this.checkThinking().then(() => {
+      console.log('[DEBUG] ========== NEW GAME ==========')
+      // Clear best move immediately when starting new game
+      this.clearRealtime('best')
+      this.clearRealtime('lost')
+      console.log('[DEBUG] newGame: Cleared best move')
+      
+      // Reset move disabled flag
+      this.moveDisabled = false
+      
+      this.stopAIAndSync().then(() => {
+        console.log('[DEBUG] newGame: stopAIAndSync completed')
+        // Create new empty board
         this.newBoard(this.boardSize)
+        console.log('[DEBUG] newGame: New board created')
+        // Clear eval data for new game
+        this.evalData = [
+          { index: 0, eval: 0, piece: this.$t('game.black') },
+          { index: 0, eval: 0, piece: this.$t('game.white') },
+        ]
+        console.log('[DEBUG] newGame: Eval data cleared')
+        // Force restart to ensure fresh state
         this.restart()
+        console.log('[DEBUG] newGame: Restart flag set')
+        // Wait for board to be fully initialized before starting AI
+        this.$nextTick(() => {
+          console.log('[DEBUG] newGame: Board initialized, calling autoStartAI()')
+          this.autoStartAI()
+        })
+      })
+    },
+
+    // Navigation button handlers with throttling to prevent rapid clicking
+    handleBackward() {
+      if (this.navigationButtonsDisabled) return
+      
+      console.log('[DEBUG] backward button clicked')
+      this.navigationButtonsDisabled = true
+      
+      this.stopAIAndSync().then(() => {
+        console.log('[DEBUG] backward: stopAIAndSync completed')
+        this.backward()
+        this.clearUsedTime()
+        console.log('[DEBUG] backward: calling autoStartAI()')
+        this.autoStartAI()
+        
+        // Re-enable button after 300ms
+        setTimeout(() => {
+          this.navigationButtonsDisabled = false
+        }, 300)
+      })
+    },
+
+    handleForward() {
+      if (this.navigationButtonsDisabled) return
+      
+      console.log('[DEBUG] forward button clicked')
+      this.navigationButtonsDisabled = true
+      
+      this.stopAIAndSync().then(() => {
+        console.log('[DEBUG] forward: stopAIAndSync completed')
+        this.forward()
+        console.log('[DEBUG] forward: calling autoStartAI()')
+        this.autoStartAI()
+        
+        // Re-enable button after 300ms
+        setTimeout(() => {
+          this.navigationButtonsDisabled = false
+        }, 300)
+      })
+    },
+
+    handleBackToBegin() {
+      if (this.navigationButtonsDisabled) return
+      
+      console.log('[DEBUG] backToBegin button clicked')
+      this.navigationButtonsDisabled = true
+      
+      this.stopAIAndSync().then(() => {
+        console.log('[DEBUG] backToBegin: stopAIAndSync completed')
+        this.backToBegin()
+        console.log('[DEBUG] backToBegin: calling autoStartAI()')
+        this.autoStartAI()
+        
+        // Re-enable button after 300ms
+        setTimeout(() => {
+          this.navigationButtonsDisabled = false
+        }, 300)
+      })
+    },
+
+    handleForwardToEnd() {
+      if (this.navigationButtonsDisabled) return
+      
+      console.log('[DEBUG] forwardToEnd button clicked')
+      this.navigationButtonsDisabled = true
+      
+      this.stopAIAndSync().then(() => {
+        console.log('[DEBUG] forwardToEnd: stopAIAndSync completed')
+        this.forwardToEnd()
+        console.log('[DEBUG] forwardToEnd: calling autoStartAI()')
+        this.autoStartAI()
+        
+        // Re-enable button after 300ms
+        setTimeout(() => {
+          this.navigationButtonsDisabled = false
+        }, 300)
       })
     },
 
     clicked(e) {
       let pos = [e.x, e.y]
-      if (this.thinking) return
+      console.log('[DEBUG] ========== BOARD CLICKED ==========')
+      console.log('[DEBUG] clicked: pos =', pos, 'button =', e.button)
 
       if (e.button == 0) {
-        if ((this.isEmpty(pos) && this.winline.length == 0) || this.isAITurn) {
-          if (!this.isAITurn) {
-            if (this.rule == 5 && !this.swaped && this.position.length == 1) {
-              // SWAP1规则
-              return this.$vux.confirm.show_i18n({
-                title: this.$t('game.swap.questionTitle'),
-                content: this.$t('game.swap.questionMsg'),
-                onCancel: () => {
-                  this.setSwaped()
-                },
-                onConfirm: () => {
-                  this.swapBlackAndWhite()
-                  if (this.isAITurn) this.startThink()
-                },
-              })
-            } else if (this.gameRule == RENJU) {
-              let isForbidPos = false
-              for (let forbidPos of this.outputs.forbid) {
-                if (pos[0] == forbidPos[0] && pos[1] == forbidPos[1]) {
-                  isForbidPos = true
-                  break
-                }
-              }
-              if (isForbidPos) {
-                return this.$vux.alert.show_i18n({
-                  title: this.$t('game.forbid.title'),
-                  content: this.$t('game.forbid.msg'),
+        // Prevent rapid consecutive moves
+        if (this.moveDisabled) {
+          console.log('[DEBUG] clicked: Move disabled, ignoring click')
+          return
+        }
+        
+        // Always allow user to make moves - check if position is valid
+        if (this.isEmpty(pos) && this.winline.length == 0) {
+          // User wants to make a move
+          if (this.rule == 5 && !this.swaped && this.position.length == 1) {
+            // SWAP1 rule
+            // Disable moves during swap dialog
+            this.moveDisabled = true
+            
+            return this.$vux.confirm.show_i18n({
+              title: this.$t('game.swap.questionTitle'),
+              content: this.$t('game.swap.questionMsg'),
+              onCancel: () => {
+                this.setSwaped()
+                this.stopAIAndSync().then(() => {
+                  this.autoStartAI()
+                  setTimeout(() => {
+                    this.moveDisabled = false
+                  }, 400)
                 })
+              },
+              onConfirm: () => {
+                this.swapBlackAndWhite()
+                this.stopAIAndSync().then(() => {
+                  if (this.isAITurn) this.autoStartAI()
+                  setTimeout(() => {
+                    this.moveDisabled = false
+                  }, 400)
+                })
+              },
+            })
+          } else if (this.gameRule == RENJU) {
+            let isForbidPos = false
+            for (let forbidPos of this.outputs.forbid) {
+              if (pos[0] == forbidPos[0] && pos[1] == forbidPos[1]) {
+                isForbidPos = true
+                break
               }
             }
-
-            this.makeMove(pos)
+            if (isForbidPos) {
+              return this.$vux.alert.show_i18n({
+                title: this.$t('game.forbid.title'),
+                content: this.$t('game.forbid.msg'),
+              })
+            }
           }
-          if (this.isAITurn) this.startThink()
+
+          console.log('[DEBUG] clicked: Valid user move, stopping AI and making move')
+          
+          // Disable moves to prevent rapid clicking
+          this.moveDisabled = true
+          console.log('[DEBUG] clicked: Move disabled')
+          
+          this.stopAIAndSync().then(() => {
+            console.log('[DEBUG] clicked: stopAIAndSync completed, making move at', pos)
+            console.log('[DEBUG] clicked: Position before move:', JSON.stringify(this.position))
+            this.makeMove(pos)
+            console.log('[DEBUG] clicked: Position after move:', JSON.stringify(this.position))
+            console.log('[DEBUG] clicked: move made, calling autoStartAI()')
+            this.autoStartAI()
+            
+            // Re-enable moves after delay
+            setTimeout(() => {
+              this.moveDisabled = false
+              console.log('[DEBUG] clicked: Move re-enabled')
+            }, 400) // 400ms delay to prevent rapid moves
+          })
+        } else {
+          console.log('[DEBUG] clicked: Invalid move - position not empty or game ended')
         }
       } else if (e.button == 2) {
-        this.backward()
-        this.clearUsedTime()
+        console.log('[DEBUG] clicked: Right click (backward)')
+        this.handleBackward()
       }
     },
 
     startThink() {
-      if (this.gameEnded) return
+      console.log('[DEBUG] startThink() called')
+      console.log('[DEBUG] - gameEnded:', this.gameEnded)
+      console.log('[DEBUG] - ready:', this.ready)
+      console.log('[DEBUG] - thinking:', this.thinking)
+      
+      if (this.gameEnded) {
+        console.log('[DEBUG] Game ended, returning early')
+        return
+      }
 
+      console.log('[DEBUG] Calling think() action...')
       this.think().then((pos) => {
+        console.log('[DEBUG] think() promise resolved, pos:', pos)
+        console.log('[DEBUG] - thinkingCanceled:', this.thinkingCanceled)
         if (this.thinkingCanceled) {
           this.thinkingCanceled = false
           return
         }
 
+        // AI should only think, NOT make moves automatically
+        // Remove automatic move making - AI just analyzes
+        console.log('[DEBUG] startThink: AI finished thinking, pos =', pos)
+        console.log('[DEBUG] startThink: NOT making move automatically - AI only thinks')
+        
         if (this.outputs.swap) {
           this.swapBlackAndWhite()
           this.$vux.alert.show_i18n({
             title: this.$t('game.swap.title'),
             content: this.$t('game.swap.msg'),
-            onHide() {
-              if (this.isAITurn) this.startThink()
+            onHide: () => {
+              if (this.isAITurn) this.autoStartAI()
             },
           })
         } else {
-          this.makeMove(pos)
-
+          // AI finished thinking - just update eval data, don't make move
           let e = +this.outputs.pv[0].eval
           if (!isNaN(e)) {
             this.evalData.push({
@@ -697,28 +574,11 @@ export default {
               piece: this.playerToMove == 'BLACK' ? this.$t('game.white') : this.$t('game.black'),
             })
           }
-
-          if (this.isAITurn) this.startThink()
+          // Don't auto-start AI again - wait for user or board state change
         }
       })
     },
 
-    startThinkBalance(mode) {
-      if (this.gameEnded) return
-
-      this.think({ balanceMode: mode }).then((pos) => {
-        if (this.thinkingCanceled) {
-          this.thinkingCanceled = false
-          return
-        }
-
-        this.makeMove(pos)
-        if (mode == 2) {
-          const pos2 = this.outputs.pv[0].bestline[1]
-          this.makeMove(pos2)
-        }
-      })
-    },
 
     swapBlackAndWhite() {
       this.setSwaped()
@@ -729,12 +589,13 @@ export default {
     },
 
     setPvAsPosition(pv) {
-      this.checkThinking().then(() => {
+      this.stopAIAndSync().then(() => {
         let fullPosition = pv.position.concat(pv.pv)
         this.newBoard(this.boardSize)
         for (let pos of fullPosition) {
           if (!this.makeMove(pos)) break
         }
+        this.autoStartAI()
       })
     },
 
@@ -777,17 +638,9 @@ export default {
       this.$vux.toast.text(this.$t('game.copiedToClipboard'))
     },
 
-    async pastePosStrFromClipboard() {
-      const posStr = await navigator.clipboard.readText();
-      this.setPosStr(posStr)
-    },
   },
   watch: {
-    bestline: function () {
-      if (this.$refs.bestlineArea) this.$refs.bestlineArea.updateAutosize()
-    },
     posStr: function (newPos) {
-      this.$refs.curposArea.updateAutosize()
       let oldIndex = this.evalData[this.evalData.length - 1].index
       let newIndex = Math.max(this.position.length, 1)
       if (newIndex < oldIndex) {
@@ -799,17 +652,46 @@ export default {
       else this.$router.push({ name: 'game' })
     },
     boardSize: function (newSize) {
-      if (this.thinking) this.stop()
-      this.newBoard(newSize)
-      this.restart()
+      this.stopAIAndSync().then(() => {
+        this.newBoard(newSize)
+        this.restart()
+        this.autoStartAI()
+      })
     },
+    // Position watch removed - board state changes are handled directly in actions
+    // to avoid duplicate AI restarts
     loadingProgress: function (progress) {
       if (progress == 1) this.showLoading = false
+    },
+    ready: function (newReady) {
+      // When engine becomes ready, auto-start AI if it's AI's turn
+      console.log('[DEBUG] ready watcher: newReady =', newReady)
+      if (newReady) {
+        console.log('[DEBUG] Engine is ready, scheduling autoStartAI()')
+        this.$nextTick(() => {
+          console.log('[DEBUG] ready watcher: calling autoStartAI() in nextTick')
+          this.autoStartAI()
+        })
+      }
     },
   },
   mounted() {
     this.newBoard(this.boardSize)
     if (this.$route.params.pos) this.setPosStr(this.$route.params.pos)
+
+    // Auto-start AI when component is mounted and ready
+    console.log('[DEBUG] Component mounted')
+    console.log('[DEBUG] - ready:', this.ready)
+    console.log('[DEBUG] - isAITurn:', this.isAITurn)
+    this.$nextTick(() => {
+      console.log('[DEBUG] mounted: nextTick callback')
+      if (this.ready) {
+        console.log('[DEBUG] mounted: ready is true, calling autoStartAI()')
+        this.autoStartAI()
+      } else {
+        console.log('[DEBUG] mounted: ready is false, NOT calling autoStartAI()')
+      }
+    })
 
     window.addEventListener('keydown', (event) => {
       const target = event.target
@@ -821,26 +703,16 @@ export default {
 
       switch (event.key) {
         case 'ArrowLeft':
-          this.checkThinking().then(() => this.backward())
+          this.handleBackward()
           break
         case 'ArrowRight':
-          this.checkThinking().then(() => this.forward())
+          this.handleForward()
           break
         case 'Home':
-          this.checkThinking().then(() => this.backToBegin())
+          this.handleBackToBegin()
           break
         case 'End':
-          this.checkThinking().then(() => this.forwardToEnd())
-          break
-        case ' ':
-          if (this.thinking) this.stop()
-          else if (this.ready && !this.gameEnded) this.startThink()
-          break
-        case 'b':
-          this.checkThinking().then(() => this.startThinkBalance(1))
-          break
-        case 'B':
-          this.checkThinking().then(() => this.startThinkBalance(2))
+          this.handleForwardToEnd()
           break
       }
     })
@@ -954,4 +826,24 @@ export default {
 .icon-button:active i {
   color: black;
 }
+
+/* Prevent border flickering on table re-render */
+.info-box table {
+  border-collapse: collapse;
+}
+
+.info-box table td {
+  border: 1px solid #e5e5e5;
+}
+
+.info-box table th {
+  border: 1px solid #e5e5e5;
+}
+
+
+/* Ensure bestline row border is always visible */
+.info-box table tbody tr:last-child td {
+  border-top: 1px solid #e5e5e5 !important;
+}
+
 </style>

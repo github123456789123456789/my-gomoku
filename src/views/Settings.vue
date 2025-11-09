@@ -1,8 +1,11 @@
 <template>
   <div class="settings">
+    <!-- Language is fixed to English - language selector hidden -->
+    <!--
     <group>
       <popup-radio :title="$t('setting.language')" v-model="languageValue" :options="languageOptions" />
     </group>
+    -->
 
     <group>
       <group-title slot="title">{{ $t('setting.thinking.timeTitle') }}</group-title>
