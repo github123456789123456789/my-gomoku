@@ -8,11 +8,6 @@
           <div class="button-box-inner" :style="{ width: isMobile ? 'auto' : `${buttonBarWidth}px` }">
             <flexbox :gutter="isMobile ? 8 : 0" justify="center">
               <flexbox-item>
-                <x-button @click.native="newGame" :class="{ 'mobile-button': isMobile }">
-                  <i class="fa fa-file-o" aria-hidden="true"></i>
-                </x-button>
-              </flexbox-item>
-              <flexbox-item>
                 <x-button :disabled="position.length == 0 || navigationButtonsDisabled" :class="{ 'mobile-button': isMobile }" @click.native="handleBackToBegin">
                   <i class="fa fa-angle-double-left fa-lg" aria-hidden="true"></i>
                 </x-button>
@@ -849,6 +844,12 @@ export default {
   width: 100%;
   max-width: 600px;
   border-collapse: collapse;
+  font-size: 120%; /* 폰트 크기 120% 증가 */
+}
+
+.info-table th,
+.info-table td {
+  font-size: 120%; /* 폰트 크기 120% 증가 */
 }
 
 .table-container {
@@ -950,14 +951,14 @@ export default {
   .info-table.mobile {
     width: 100% !important;
     max-width: 100% !important;
-    font-size: 12px !important;
+    font-size: 14.4px !important; /* 12px * 120% */
     line-height: 1.5 !important;
   }
 
   .info-table.mobile th,
   .info-table.mobile td {
     padding: 6px 4px !important;
-    font-size: 11px !important;
+    font-size: 13.2px !important; /* 11px * 120% */
   }
 
   /* 단일 분석 모드 - 열 너비 조정 */
@@ -996,7 +997,7 @@ export default {
     max-width: 50px !important;
   }
 
-  /* Bestline 행 - 4줄 높이로 고정 */
+  /* Bestline 행(3번째 행)만 - 4줄 높이로 고정 */
   .bestline-cell.mobile,
   .info-table.mobile tbody tr:last-child td,
   .info-table.mobile tbody tr td.bestline-cell {
@@ -1009,10 +1010,10 @@ export default {
     vertical-align: top !important;
   }
 
-  /* 다중 분석 모드의 모든 행 높이 */
-  .info-table.mobile tbody tr td {
-    height: 96px !important;
-    vertical-align: top !important;
+  /* 두번째 행은 높이 자동 조정 (1행과 동일하게) */
+  .info-table.mobile tbody tr:not(:last-child) td:not(.bestline-cell) {
+    height: auto !important;
+    max-height: none !important;
   }
 
   .bestline-content {
