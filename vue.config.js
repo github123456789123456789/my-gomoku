@@ -54,8 +54,8 @@ module.exports = {
   // 예: 리포지토리가 'username/Gomocalc'라면 '/Gomocalc/'
   // 루트 도메인(username.github.io)을 사용한다면 '/'
   publicPath: process.env.NODE_ENV === 'production'
-  ? '/my-gomoku/'  // 님의 깃허브 저장소 이름
-  : '/',
+    ? '/'  // <-- '/my-gomoku/' 였던 것을 '/'로 되돌립니다!
+    : '/',
 
   pwa: {
     name: 'Rapfi',
