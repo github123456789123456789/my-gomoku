@@ -971,6 +971,14 @@ export default {
   .info-table.mobile td {
     padding: 6px 4px !important;
     font-size: 13.2px !important; /* 11px * 120% */
+    vertical-align: middle !important; /* 모든 행에 위아래 가운데 정렬 */
+  }
+
+  /* 스마트폰에서 모든 행의 높이를 1줄로 고정 */
+  .info-table.mobile tbody tr td {
+    height: 1.6em !important;
+    max-height: 1.6em !important;
+    line-height: 1.6 !important;
   }
 
   /* 단일 분석 모드 - 열 너비 조정 */
@@ -1019,14 +1027,8 @@ export default {
     padding: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
-    vertical-align: top !important;
+    vertical-align: middle !important; /* 가운데 정렬 */
     line-height: 1.6 !important;
-  }
-
-  /* 두번째 행은 높이 자동 조정 (1행과 동일하게) */
-  .info-table.mobile tbody tr:not(:last-child) td:not(.bestline-cell) {
-    height: auto !important;
-    max-height: none !important;
   }
 
   .bestline-content {
