@@ -97,11 +97,11 @@
             </thead>
             <tbody>
               <tr v-for="i in Math.min(nbest, outputs.pv.length)" :key="i">
-                <td style="width: 50px; height: 96px;">{{ i }}</td>
-                <td style="width: 80px; height: 96px;">
+                <td style="width: 50px;">{{ i }}</td>
+                <td style="width: 80px;">
                   {{ outputs.pv[i - 1].depth + '-' + outputs.pv[i - 1].seldepth }}
                 </td>
-                <td style="font-weight: bold; width: 80px; height: 96px;">{{ outputs.pv[i - 1].eval }}</td>
+                <td style="font-weight: bold; width: 80px;">{{ outputs.pv[i - 1].eval }}</td>
                 <td class="bestline-cell" style="overflow-y: auto; overflow-wrap: break-word; word-break: break-all;">
                   <div class="bestline-content">
                     <Bestline :bestline="outputs.pv[i - 1].bestline" :boardSize="boardSize"
@@ -400,6 +400,7 @@ export default {
       
       console.log('[DEBUG] backToBegin button clicked')
       this.navigationButtonsDisabled = true
+      this.moveDisabled = true // 착수도 막기
       
       this.stopAIAndSync().then(() => {
         console.log('[DEBUG] backToBegin: stopAIAndSync completed')
@@ -407,10 +408,12 @@ export default {
         console.log('[DEBUG] backToBegin: calling autoStartAI()')
         this.autoStartAI()
         
-        // Re-enable button after 300ms
+        // Re-enable buttons and moves after 5 seconds
         setTimeout(() => {
           this.navigationButtonsDisabled = false
-        }, 300)
+          this.moveDisabled = false
+          console.log('[DEBUG] backToBegin: Navigation and moves re-enabled after 5 seconds')
+        }, 5000)
       })
     },
 
@@ -419,6 +422,7 @@ export default {
       
       console.log('[DEBUG] forwardToEnd button clicked')
       this.navigationButtonsDisabled = true
+      this.moveDisabled = true // 착수도 막기
       
       this.stopAIAndSync().then(() => {
         console.log('[DEBUG] forwardToEnd: stopAIAndSync completed')
@@ -426,10 +430,12 @@ export default {
         console.log('[DEBUG] forwardToEnd: calling autoStartAI()')
         this.autoStartAI()
         
-        // Re-enable button after 300ms
+        // Re-enable buttons and moves after 5 seconds
         setTimeout(() => {
           this.navigationButtonsDisabled = false
-        }, 300)
+          this.moveDisabled = false
+          console.log('[DEBUG] forwardToEnd: Navigation and moves re-enabled after 5 seconds')
+        }, 5000)
       })
     },
 
@@ -864,20 +870,26 @@ export default {
 }
 
 .bestline-cell {
-  height: 96px; /* 4줄 기준: line-height 1.6 * 4줄 * 15px ≈ 96px */
-  max-height: 96px;
+  height: 1.6em; /* 한 줄 높이: line-height만큼 */
+  max-height: 1.6em;
   overflow-y: auto;
   width: 100%;
   max-width: 600px;
   border-top: 1px solid #e5e5e5;
   vertical-align: top;
+  line-height: 1.6;
 }
 
 .bestline-content {
-  padding: 5px;
+  padding: 0;
   overflow-wrap: break-word;
   word-break: break-all;
   line-height: 1.6;
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
 }
 
 .position-group {
@@ -997,17 +1009,18 @@ export default {
     max-width: 50px !important;
   }
 
-  /* Bestline 행(3번째 행)만 - 4줄 높이로 고정 */
+  /* Bestline 행 - 한 줄 높이로 고정 */
   .bestline-cell.mobile,
   .info-table.mobile tbody tr:last-child td,
   .info-table.mobile tbody tr td.bestline-cell {
-    height: 96px !important;
-    max-height: 96px !important;
-    font-size: 10px !important;
-    padding: 4px !important;
+    height: 1.6em !important;
+    max-height: 1.6em !important;
+    font-size: inherit !important;
+    padding: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
     vertical-align: top !important;
+    line-height: 1.6 !important;
   }
 
   /* 두번째 행은 높이 자동 조정 (1행과 동일하게) */
@@ -1017,8 +1030,13 @@ export default {
   }
 
   .bestline-content {
-    padding: 4px !important;
+    padding: 0 !important;
     line-height: 1.6 !important;
+    display: block !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    white-space: nowrap !important;
   }
 
   /* 다중 분석 모드 - 열 너비 조정 */

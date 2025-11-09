@@ -115,6 +115,8 @@ export default {
       this.$i18n.locale = 'en'
       // Force RENJU rule as default
       this.setValue({ key: 'rule', value: 2 })
+      // Force nbest to 5 for multiple candidate display
+      this.setValue({ key: 'nbest', value: 5 })
       // Force AI to always think for both colors
       this.setValue({ key: 'aiThinkBlack', value: true })
       this.setValue({ key: 'aiThinkWhite', value: true })

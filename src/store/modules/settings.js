@@ -54,7 +54,7 @@ const state = {
   rule: 2, // Rule: RENJU (default) - 0:Freestyle 1:Standard 2:RENJU 5:Swap1
   threads: null, // 线程数
   strength: 100, // 棋力限制 (默认100%棋力)
-  nbest: 1, // MultiPV多点分析
+  nbest: 5, // MultiPV多点分析 (기본값 5로 변경하여 여러 후보 표시)
   configIndex: 0, // 配置序号: [0, CONFIGS.length)
   candRange: 3, // 选点范围: {0, 1, 2, 3, 4, 5}
   hashSize: 128, // 置换表大小, 单位 MiB

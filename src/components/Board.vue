@@ -217,28 +217,142 @@ function drawWinline(ctx, style, cs, winline) {
   ctx.restore()
 }
 
-function drawRealtime(ctx, style, cs, moves, position, pv) {
+// eval 값을 비교 가능한 값으로 변환하는 함수 (mate 상황 처리 포함)
+// 반환값: { value: 비교값, isMate: true/false, mateType: '+M'/'-M'/null, mateNum: 숫자 }
+function parseEval(evalStr) {
+  if (!evalStr || evalStr === '-') return null
+  
+  // +M1, -M1 같은 mate 상황 처리
+  if (evalStr.startsWith('+M')) {
+    const mateNum = parseInt(evalStr.substring(2))
+    return {
+      value: 100000 - mateNum, // 숫자가 작을수록 큰 값 (더 빠른 승리)
+      isMate: true,
+      mateType: '+M',
+      mateNum: mateNum
+    }
+  } else if (evalStr.startsWith('-M')) {
+    const mateNum = parseInt(evalStr.substring(2))
+    return {
+      value: -100000 + mateNum, // 숫자가 클수록 큰 값 (더 늦은 패배)
+      isMate: true,
+      mateType: '-M',
+      mateNum: mateNum
+    }
+  }
+  
+  // 숫자로 변환 시도
+  const num = parseFloat(evalStr)
+  return isNaN(num) ? null : {
+    value: num,
+    isMate: false,
+    mateType: null,
+    mateNum: null
+  }
+}
+
+// eval 비교 함수 (mate 상황 고려)
+function compareEval(eval1, eval2) {
+  if (!eval1 && !eval2) return 0
+  if (!eval1) return -1
+  if (!eval2) return 1
+  
+  // 둘 다 mate인 경우
+  if (eval1.isMate && eval2.isMate) {
+    if (eval1.mateType === '+M' && eval2.mateType === '+M') {
+      // +M끼리는 숫자가 작을수록 좋음
+      return eval2.mateNum - eval1.mateNum
+    } else if (eval1.mateType === '-M' && eval2.mateType === '-M') {
+      // -M끼리는 숫자가 클수록 좋음
+      return eval1.mateNum - eval2.mateNum
+    } else if (eval1.mateType === '+M' && eval2.mateType === '-M') {
+      // +M이 -M보다 항상 좋음
+      return 1
+    } else {
+      // -M이 +M보다 항상 나쁨
+      return -1
+    }
+  }
+  
+  // 하나만 mate인 경우
+  if (eval1.isMate && eval1.mateType === '+M') return 1
+  if (eval1.isMate && eval1.mateType === '-M') return -1
+  if (eval2.isMate && eval2.mateType === '+M') return -1
+  if (eval2.isMate && eval2.mateType === '-M') return 1
+  
+  // 둘 다 일반 eval인 경우
+  return eval1.value - eval2.value
+}
+
+function drawRealtime(ctx, style, cs, moves, position, pv, nbest) {
+  if (!pv || pv.length === 0) return
+  
+  // 표시할 후보 수 결정 (pv 배열에 있는 모든 후보 표시)
+  // nbest는 엔진에게 계산하라고 지시하는 수이고, 실제 표시는 pv 배열의 모든 후보를 표시
+  const candidateCount = pv.length
+  
+  console.log('[DEBUG] drawRealtime: pv.length =', pv.length, 'nbest =', nbest, 'candidateCount =', candidateCount)
+  
+  // 최고 eval 값 찾기 (mate 상황 고려)
+  let bestEval = null
+  for (let i = 0; i < candidateCount; i++) {
+    if (!pv[i] || !pv[i].eval) continue
+    const evalObj = parseEval(pv[i].eval)
+    if (evalObj !== null) {
+      if (bestEval === null || compareEval(evalObj, bestEval) > 0) {
+        bestEval = evalObj
+      }
+    }
+  }
+  
+  // 겹쳐지는 것을 방지하기 위해 이미 그린 위치 추적
+  const drawnPositions = new Set()
+  
   ctx.save()
   ctx.translate(paddingX + cs / 2, paddingTop + cs / 2)
   ctx.scale(cs, cs)
 
-  // Removed lost moves (white small circles)
-  // ctx.fillStyle = style.lostMoveColor
-  // for (let p of moves.lost) {
-  //   fillCircle(ctx, p[0], p[1], style.realtimeMoveScale)
-  // }
-
-  // 바둑돌과 같은 크기의 빨간색 동그라미 그리기
+  // 바둑돌과 같은 크기의 동그라미 그리기
   let radius = style.pieceScale / 2
-  ctx.fillStyle = style.bestMoveColor
   
-  for (let p of moves.best) {
-    // Check if this position is already occupied by a stone
-    const isOccupied = position.some(existingPos => existingPos[0] === p[0] && existingPos[1] === p[1])
-    if (!isOccupied) {
-      // 바둑돌과 같은 크기의 빨간색 동그라미
-      fillCircle(ctx, p[0], p[1], radius)
+  // 여러 후보를 역순으로 그리기 (나중에 그린 것이 위에 표시되도록)
+  for (let i = candidateCount - 1; i >= 0; i--) {
+    if (!pv[i] || !pv[i].bestline || pv[i].bestline.length === 0) {
+      console.log('[DEBUG] drawRealtime: Skipping pv[' + i + '] - no bestline')
+      continue
     }
+    
+    let candidatePos = pv[i].bestline[0]
+    const posKey = `${candidatePos[0]},${candidatePos[1]}`
+    
+    // Check if this position is already occupied by a stone
+    const isOccupied = position.some(existingPos => existingPos[0] === candidatePos[0] && existingPos[1] === candidatePos[1])
+    if (isOccupied) {
+      console.log('[DEBUG] drawRealtime: Skipping pv[' + i + '] at', candidatePos, '- position occupied')
+      continue
+    }
+    
+    // 겹쳐지는 것을 방지: 이미 그린 위치는 건너뛰기
+    if (drawnPositions.has(posKey)) {
+      console.log('[DEBUG] drawRealtime: Skipping pv[' + i + '] at', candidatePos, '- already drawn')
+      continue
+    }
+    
+    // eval 값을 비교하여 최고 점수인지 확인
+    const evalObj = parseEval(pv[i].eval)
+    const isBest = (evalObj !== null && bestEval !== null && compareEval(evalObj, bestEval) === 0)
+    
+    console.log('[DEBUG] drawRealtime: Drawing pv[' + i + '] at', candidatePos, 'eval =', pv[i].eval, 'isBest =', isBest)
+    
+    // 최고 점수(같은 점수 포함)는 빨간색, 나머지는 파란색
+    if (isBest) {
+      ctx.fillStyle = style.bestMoveColor // 빨간색 (최고수)
+    } else {
+      ctx.fillStyle = style.thoughtMoveColor // 파란색 (나머지)
+    }
+    
+    fillCircle(ctx, candidatePos[0], candidatePos[1], radius)
+    drawnPositions.add(posKey) // 그린 위치 기록
   }
 
   ctx.restore()
@@ -250,23 +364,27 @@ function drawRealtime(ctx, style, cs, moves, position, pv) {
   ctx.textBaseline = 'middle'
   ctx.translate(paddingX + cs / 2, paddingTop + cs / 2)
   
-  for (let p of moves.best) {
-    const isOccupied = position.some(existingPos => existingPos[0] === p[0] && existingPos[1] === p[1])
-    if (!isOccupied) {
-      // eval 값 찾기
-      let evalValue = ''
-      if (pv && pv.length > 0 && pv[0].bestline && pv[0].bestline.length > 0) {
-        // bestline의 첫 번째 위치와 일치하는지 확인
-        if (pv[0].bestline[0][0] === p[0] && pv[0].bestline[0][1] === p[1]) {
-          evalValue = pv[0].eval || ''
-        }
-      }
-      
-      // eval 값이 있으면 흰색으로 표시
-      if (evalValue) {
-        ctx.fillStyle = style.indexColorBlack // 흰색
-        ctx.fillText(evalValue, cs * p[0], cs * p[1], cs * 0.95)
-      }
+  // 여러 후보의 eval 텍스트 그리기 (겹침 방지)
+  const drawnTextPositions = new Set()
+  for (let i = 0; i < candidateCount; i++) {
+    if (!pv[i] || !pv[i].bestline || pv[i].bestline.length === 0) continue
+    
+    let candidatePos = pv[i].bestline[0]
+    const posKey = `${candidatePos[0]},${candidatePos[1]}`
+    
+    const isOccupied = position.some(existingPos => existingPos[0] === candidatePos[0] && existingPos[1] === candidatePos[1])
+    if (isOccupied) continue
+    
+    // 겹쳐지는 것을 방지: 이미 텍스트를 그린 위치는 건너뛰기
+    if (drawnTextPositions.has(posKey)) continue
+    
+    let evalValue = pv[i].eval || ''
+    
+    // eval 값이 있으면 흰색으로 표시
+    if (evalValue) {
+      ctx.fillStyle = style.indexColorBlack // 흰색
+      ctx.fillText(evalValue, cs * candidatePos[0], cs * candidatePos[1], cs * 0.95)
+      drawnTextPositions.add(posKey) // 텍스트를 그린 위치 기록
     }
   }
   
@@ -389,6 +507,7 @@ export default {
       'showWinline',
       'showForbid',
       'clickCheck',
+      'nbest',
     ]),
     ...mapState('ai', {
       realtime: (state) => state.outputs.realtime,
@@ -498,7 +617,7 @@ export default {
 
       if (this.selecting) drawSelection(ctx, this.boardStyle, cellSize, this.selectedCoord)
       else if (!this.previewPv) {
-        if (this.showDetail) drawRealtime(ctx, this.boardStyle, cellSize, this.realtime, this.position, this.pv)
+        if (this.showDetail) drawRealtime(ctx, this.boardStyle, cellSize, this.realtime, this.position, this.pv, this.nbest)
         if (this.showPvEval > 0 && this.pv.length > 0 && this.thinking)
           drawPvEval(ctx, this.showPvEval, this.boardStyle, cellSize, this.pv)
       }
