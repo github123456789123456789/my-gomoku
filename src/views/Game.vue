@@ -38,8 +38,6 @@
       </div>
     </div>
 
-    <load-more :show-loading="false" background-color="#fbf9fe" class="seperator"></load-more>
-
     <div class="info-box" :class="{ 'mobile': isMobile }" :style="showAnalysis ? {} : { display: 'none' }">
       <div class="info-box-inner" :class="{ 'mobile': isMobile }">
 
@@ -65,20 +63,10 @@
               </tr>
               <tr>
                 <td colspan="5" class="bestline-cell">
-                  <flexbox align="stretch" :gutter="0" style="padding: 5px">
-                    <flexbox-item style="
-                        padding: 2px 10px 2px 0;
-                        width: initial;
-                        line-height: initial;
-                        flex: none;
-                      ">
-                      {{ $t('game.info.bestline') }}
-                    </flexbox-item>
-                    <flexbox-item style="overflow-wrap: break-word; word-break: break-all; line-height: 1.6;">
-                      <Bestline :bestline="outputs.pv[0].bestline" :boardSize="boardSize"
-                        v-on:pvPreview="(pv) => (previewPv = pv)" v-on:pvSet="setPvAsPosition"></Bestline>
-                    </flexbox-item>
-                  </flexbox>
+                  <div class="bestline-content">
+                    <Bestline :bestline="outputs.pv[0].bestline" :boardSize="boardSize"
+                      v-on:pvPreview="(pv) => (previewPv = pv)" v-on:pvSet="setPvAsPosition"></Bestline>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -114,13 +102,13 @@
             </thead>
             <tbody>
               <tr v-for="i in Math.min(nbest, outputs.pv.length)" :key="i">
-                <td style="width: 50px;" class="bestline-cell">{{ i }}</td>
-                <td style="width: 80px;" class="bestline-cell">
+                <td style="width: 50px; height: 96px;">{{ i }}</td>
+                <td style="width: 80px; height: 96px;">
                   {{ outputs.pv[i - 1].depth + '-' + outputs.pv[i - 1].seldepth }}
                 </td>
-                <td style="font-weight: bold; width: 80px;" class="bestline-cell">{{ outputs.pv[i - 1].eval }}</td>
+                <td style="font-weight: bold; width: 80px; height: 96px;">{{ outputs.pv[i - 1].eval }}</td>
                 <td class="bestline-cell" style="overflow-y: auto; overflow-wrap: break-word; word-break: break-all;">
-                  <div style="line-height: 1.6;">
+                  <div class="bestline-content">
                     <Bestline :bestline="outputs.pv[i - 1].bestline" :boardSize="boardSize"
                       v-on:pvPreview="(pv) => (previewPv = pv)" v-on:pvSet="setPvAsPosition"></Bestline>
                   </div>
@@ -875,11 +863,20 @@ export default {
 }
 
 .bestline-cell {
-  height: 100px;
+  height: 96px; /* 4줄 기준: line-height 1.6 * 4줄 * 15px ≈ 96px */
+  max-height: 96px;
   overflow-y: auto;
   width: 100%;
   max-width: 600px;
   border-top: 1px solid #e5e5e5;
+  vertical-align: top;
+}
+
+.bestline-content {
+  padding: 5px;
+  overflow-wrap: break-word;
+  word-break: break-all;
+  line-height: 1.6;
 }
 
 .position-group {
@@ -901,7 +898,7 @@ export default {
   .button-box.mobile {
     display: flex;
     justify-content: center;
-    margin: 10px auto;
+    margin: 5px auto;
   }
 
   .button-box-inner {
@@ -910,21 +907,27 @@ export default {
   }
 
   .mobile-button {
-    padding: 8px 12px !important;
-    min-width: 40px !important;
+    padding: 4px 18px !important;
+    min-width: 60px !important;
+    height: auto !important;
     font-size: 14px !important;
+    line-height: 1.2 !important;
   }
 
   .mobile-button i {
-    font-size: 16px !important;
+    font-size: 18px !important;
   }
 
-  /* Info box 스타일 */
+  /* Info box 스타일 - 가운데 정렬 */
   .info-box.mobile {
-    margin-left: 10px !important;
-    margin-right: 10px !important;
+    display: block !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
     max-width: 100% !important;
-    padding: 10px 5px !important;
+    padding: 5px 5px !important;
+    margin-top: 5px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .info-box-inner.mobile {
@@ -932,6 +935,7 @@ export default {
     width: 100% !important;
     margin: 0 auto !important;
     padding: 0 5px !important;
+    box-sizing: border-box !important;
   }
 
   /* 테이블 컨테이너 */
@@ -992,16 +996,28 @@ export default {
     max-width: 50px !important;
   }
 
-  /* Bestline 행 */
+  /* Bestline 행 - 4줄 높이로 고정 */
   .bestline-cell.mobile,
   .info-table.mobile tbody tr:last-child td,
   .info-table.mobile tbody tr td.bestline-cell {
-    height: 80px !important;
-    max-height: 80px !important;
+    height: 96px !important;
+    max-height: 96px !important;
     font-size: 10px !important;
     padding: 4px !important;
     width: 100% !important;
     max-width: 100% !important;
+    vertical-align: top !important;
+  }
+
+  /* 다중 분석 모드의 모든 행 높이 */
+  .info-table.mobile tbody tr td {
+    height: 96px !important;
+    vertical-align: top !important;
+  }
+
+  .bestline-content {
+    padding: 4px !important;
+    line-height: 1.6 !important;
   }
 
   /* 다중 분석 모드 - 열 너비 조정 */
