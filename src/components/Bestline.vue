@@ -70,6 +70,7 @@ export default {
   line-height: 20px;
   border: 1px solid transparent;
   border-radius: 0px;
+  font-size: 120%;
 }
 
 .move:hover {

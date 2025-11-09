@@ -217,7 +217,7 @@ function drawWinline(ctx, style, cs, winline) {
   ctx.restore()
 }
 
-function drawRealtime(ctx, style, cs, moves, position) {
+function drawRealtime(ctx, style, cs, moves, position, pv) {
   ctx.save()
   ctx.translate(paddingX + cs / 2, paddingTop + cs / 2)
   ctx.scale(cs, cs)
@@ -233,7 +233,8 @@ function drawRealtime(ctx, style, cs, moves, position) {
     // Check if this position is already occupied by a stone
     const isOccupied = position.some(existingPos => existingPos[0] === p[0] && existingPos[1] === p[1])
     if (!isOccupied) {
-      fillCircle(ctx, p[0], p[1], style.bestMoveScale)
+      // 동그라미 크기를 2배로 증가
+      fillCircle(ctx, p[0], p[1], style.bestMoveScale * 2)
     }
   }
 
@@ -465,7 +466,7 @@ export default {
 
       if (this.selecting) drawSelection(ctx, this.boardStyle, cellSize, this.selectedCoord)
       else if (!this.previewPv) {
-        if (this.showDetail) drawRealtime(ctx, this.boardStyle, cellSize, this.realtime, this.position)
+        if (this.showDetail) drawRealtime(ctx, this.boardStyle, cellSize, this.realtime, this.position, this.pv)
         if (this.showPvEval > 0 && this.pv.length > 0 && this.thinking)
           drawPvEval(ctx, this.showPvEval, this.boardStyle, cellSize, this.pv)
       }
