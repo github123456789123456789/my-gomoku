@@ -195,7 +195,7 @@ export default {
       'aiThinkWhite',
       'showAnalysis',
     ]),
-    ...mapState('ai', ['outputs', 'thinking', 'lastThinkTime', 'ready', 'loadingProgress']),
+    ...mapState('ai', ['outputs', 'thinking', 'lastThinkTime', 'ready', 'loadingProgress', 'engineError']),
     ...mapState('position', ['position', 'lastPosition', 'winline', 'swaped']),
     ...mapGetters('settings', ['turnTime', 'matchTime', 'gameRule']),
     ...mapGetters('ai', ['bestlineStr', 'bestline']),
@@ -245,7 +245,7 @@ export default {
       'flip',
       'moveTowards',
     ]),
-    ...mapActions('ai', ['think', 'stop', 'restart']),
+    ...mapActions('ai', ['think', 'stop', 'restart', 'forceRestartEngine']),
 
     checkThinking() {
       return new Promise((resolve) => {
@@ -294,18 +294,30 @@ export default {
       })
     },
 
-    autoStartAI() {
+    async autoStartAI() {
       // Auto-start AI if it's AI's turn and game hasn't ended
       // This is called after board state changes to ensure AI analyzes the new position
       console.log('[DEBUG] autoStartAI() called')
       console.log('[DEBUG] - isAITurn:', this.isAITurn)
       console.log('[DEBUG] - gameEnded:', this.gameEnded)
       console.log('[DEBUG] - ready:', this.ready)
+      console.log('[DEBUG] - engineError:', this.engineError)
       console.log('[DEBUG] - playerToMove:', this.playerToMove)
       console.log('[DEBUG] - aiThinkBlack:', this.aiThinkBlack)
       console.log('[DEBUG] - aiThinkWhite:', this.aiThinkWhite)
       console.log('[DEBUG] - position.length:', this.position.length)
       console.log('[DEBUG] - thinking:', this.thinking)
+      
+      // If engine is in error state, restart it automatically when board state changes
+      if (this.engineError) {
+        console.log('[DEBUG] autoStartAI: Engine is in error state, attempting restart...')
+        const success = await this.forceRestartEngine()
+        if (!success) {
+          console.error('[ERROR] autoStartAI: Failed to restart engine')
+          return
+        }
+        console.log('[DEBUG] autoStartAI: Engine restarted successfully')
+      }
       
       // Wait a bit to ensure board state is fully updated
       this.$nextTick(() => {

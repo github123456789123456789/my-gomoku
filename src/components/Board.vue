@@ -284,7 +284,7 @@ function compareEval(eval1, eval2) {
   return eval1.value - eval2.value
 }
 
-function drawRealtime(ctx, style, cs, moves, position, pv, nbest) {
+function drawRealtime(ctx, style, cs, moves, position, pv, nbest, forbid) {
   if (!pv || pv.length === 0) return
   
   // 표시할 후보 수 결정 (pv 배열에 있는 모든 후보 표시)
@@ -296,7 +296,8 @@ function drawRealtime(ctx, style, cs, moves, position, pv, nbest) {
   // 최고 eval 값 찾기 (mate 상황 고려)
   let bestEval = null
   for (let i = 0; i < candidateCount; i++) {
-    if (!pv[i] || !pv[i].eval) continue
+    if (!pv[i] || !pv[i].eval || !pv[i].bestline || pv[i].bestline.length === 0) continue
+    
     const evalObj = parseEval(pv[i].eval)
     if (evalObj !== null) {
       if (bestEval === null || compareEval(evalObj, bestEval) > 0) {
@@ -617,7 +618,7 @@ export default {
 
       if (this.selecting) drawSelection(ctx, this.boardStyle, cellSize, this.selectedCoord)
       else if (!this.previewPv) {
-        if (this.showDetail) drawRealtime(ctx, this.boardStyle, cellSize, this.realtime, this.position, this.pv, this.nbest)
+        if (this.showDetail) drawRealtime(ctx, this.boardStyle, cellSize, this.realtime, this.position, this.pv, this.nbest, this.forbid)
         if (this.showPvEval > 0 && this.pv.length > 0 && this.thinking)
           drawPvEval(ctx, this.showPvEval, this.boardStyle, cellSize, this.pv)
       }

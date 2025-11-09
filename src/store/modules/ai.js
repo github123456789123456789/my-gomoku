@@ -13,6 +13,11 @@ const state = {
   lastThinkPosition: [],
   currentConfig: null,
   hashSize: null,
+  thinkingTimeout: null,
+  thinkingStartTime: 0,
+  engineError: false,
+  engineErrorShown: false,
+  posCallback: null,
   outputs: {
     pos: null,
     swap: null,
@@ -39,7 +44,6 @@ const state = {
     error: null,
   },
   messages: [],
-  posCallback: null,
 }
 
 const getters = {
@@ -167,12 +171,31 @@ const mutations = {
   setLastThinkPosition(state, position) {
     state.lastThinkPosition = [...position]
   },
+  setThinkingTimeout(state, timeout) {
+    state.thinkingTimeout = timeout
+  },
+  clearThinkingTimeout(state) {
+    if (state.thinkingTimeout) {
+      clearTimeout(state.thinkingTimeout)
+      state.thinkingTimeout = null
+    }
+  },
+  setThinkingStartTime(state, time) {
+    state.thinkingStartTime = time
+  },
+  setEngineError(state, value) {
+    state.engineError = value
+  },
+  setEngineErrorShown(state, value) {
+    state.engineErrorShown = value
+  },
 }
 
 const actions = {
-  async initEngine({ commit, dispatch, state }, loadFullEngine) {
+  async initEngine({ commit, dispatch, state, rootState, rootGetters }, loadFullEngine) {
     commit('setLoadingProgress', 0.0)
     commit('setReady', false)
+    
     const callback = (r) => {
       if (r.realtime) {
         switch (r.realtime.type) {
@@ -209,6 +232,45 @@ const actions = {
       } else if (r.speed) {
         commit('setOutput', { key: 'speed', value: r.speed })
       } else if (r.eval) {
+        // CRITICAL: Check for -M0 eval which indicates engine error
+        if (r.eval === '-M0') {
+          // Only process once to avoid repeated alerts
+          if (state.engineError) {
+            return // Already handled, ignore further -M0 evals
+          }
+          
+          console.error('[ERROR] ai/engine callback: Detected -M0 eval - Engine error!')
+          console.error('[ERROR] ai/engine callback: This indicates forced defense on forbidden position bug')
+          console.error('[ERROR] ai/engine callback: Position =', JSON.stringify(rootState.position.position))
+          console.error('[ERROR] ai/engine callback: Shutting down AI engine immediately')
+          
+          // Set error flag
+          commit('setEngineError', true)
+          
+          // Clear thinking timeout
+          commit('clearThinkingTimeout')
+          
+          // Force stop AI and shut down
+          commit('setThinkingState', false)
+          commit('setReady', false) // Mark engine as not ready
+          commit('setRestart', true)
+          commit('clearRealtime', 'best')
+          commit('clearRealtime', 'lost')
+          
+          // Clear posCallback and call with null to indicate failure
+          const callback = state.posCallback
+          commit('setPosCallback', null)
+          if (callback) {
+            callback(null)
+            console.log('[ERROR] ai/engine callback: posCallback called with null due to -M0 error')
+          }
+          
+          // Mark error as shown (no alert, silent shutdown)
+          commit('setEngineErrorShown', true)
+          
+          return // Don't process this eval further
+        }
+        
         commit('setPVOutput', { key: 'eval', value: r.eval })
       } else if (r.winrate) {
         commit('setPVOutput', { key: 'winrate', value: r.winrate })
@@ -217,11 +279,17 @@ const actions = {
       } else if (r.pos) {
         console.log('[DEBUG] ai/engine callback: Received pos =', r.pos)
         
+        // Clear thinking timeout since we got a response
+        commit('clearThinkingTimeout')
+        
         // Only process if we're actually thinking - prevents stale callbacks
         if (!state.thinking) {
           console.log('[DEBUG] ai/engine callback: WARNING - Not thinking, ignoring pos callback')
           return
         }
+        
+        const elapsedTime = Date.now() - state.thinkingStartTime
+        console.log('[DEBUG] ai/engine callback: AI thinking completed in', elapsedTime, 'ms')
         
         // Handle mate situations (+M1, etc.) where pos might be empty but bestline[0] has the move
         let finalPos = r.pos
@@ -359,6 +427,13 @@ const actions = {
     console.log('[DEBUG] ai/think: *** CRITICAL: Sending current board state to engine ***')
     console.log('[DEBUG] ai/think: Position being sent =', JSON.stringify(rootState.position.position))
     dispatch('sendBoard', false)
+    
+    // CRITICAL: Check for forbidden moves BEFORE starting AI thinking
+    // This ensures forbid information is available when filtering AI recommendations
+    if (rootGetters['settings/gameRule'] == RENJU) {
+      console.log('[DEBUG] ai/think: Checking forbidden moves before AI thinking')
+      dispatch('checkForbid')
+    }
     commit('setThinkStartTime')
     commit('setLastThinkPosition', rootState.position.position)
     commit('clearOutput')
@@ -373,6 +448,41 @@ const actions = {
       engine.sendCommand('YXNBEST ' + rootState.settings.nbest)
     }
 
+    // Record thinking start time
+    commit('setThinkingStartTime', Date.now())
+    
+    // Set timeout for AI thinking (30 seconds)
+    const timeout = setTimeout(() => {
+      console.error('[ERROR] ai/think: AI TIMEOUT - No response after 30 seconds!')
+      console.error('[ERROR] ai/think: Position =', JSON.stringify(rootState.position.position))
+      console.error('[ERROR] ai/think: This may indicate an engine bug (e.g., forced defense on forbidden position)')
+      console.error('[ERROR] ai/think: Shutting down AI engine')
+      
+      // Set error flag
+      commit('setEngineError', true)
+      
+      // Force engine shutdown
+      commit('clearThinkingTimeout')
+      commit('setThinkingState', false)
+      commit('setReady', false) // Mark engine as not ready
+      commit('setRestart', true)
+      commit('clearRealtime', 'best')
+      commit('clearRealtime', 'lost')
+      
+      // Call posCallback with null to indicate failure
+      const callback = state.posCallback
+      commit('setPosCallback', null)
+      if (callback) {
+        callback(null)
+      }
+      
+      // Mark error as shown (no alert, silent shutdown)
+      commit('setEngineErrorShown', true)
+    }, 30000) // 30 seconds timeout
+    
+    commit('setThinkingTimeout', timeout)
+    console.log('[DEBUG] ai/think: Set 30-second timeout for AI thinking')
+    
     console.log('[DEBUG] ai/think: Returning promise, waiting for engine response')
     return new Promise((resolve) => {
       commit('setPosCallback', resolve)
@@ -381,6 +491,10 @@ const actions = {
   stop({ commit, state }) {
     console.log('[DEBUG] ai/stop: ========== STOP CALLED ==========')
     console.log('[DEBUG] ai/stop: state.thinking =', state.thinking)
+    
+    // Clear thinking timeout
+    commit('clearThinkingTimeout')
+    console.log('[DEBUG] ai/stop: Cleared thinking timeout')
     
     // CRITICAL: Clear posCallback immediately to prevent stale callbacks
     commit('setPosCallback', null)
@@ -428,6 +542,42 @@ const actions = {
     // Clear best move when restarting
     commit('clearRealtime', 'best')
     commit('clearRealtime', 'lost')
+  },
+  async forceRestartEngine({ commit, dispatch }) {
+    console.log('[DEBUG] ai/forceRestartEngine: ========== FORCE RESTART ENGINE ==========')
+    
+    // Clear all states
+    commit('clearThinkingTimeout')
+    commit('setPosCallback', null)
+    commit('setThinkingState', false)
+    commit('setRestart', true)
+    commit('clearRealtime', 'best')
+    commit('clearRealtime', 'lost')
+    commit('setReady', false)
+    
+    // Clear error flags
+    commit('setEngineError', false)
+    commit('setEngineErrorShown', false)
+    
+    // Reset engine state
+    commit('setCurrentConfig', null)
+    commit('setHashSize', null)
+    commit('setStartSize', 15)
+    commit('clearUsedTime')
+    
+    console.log('[DEBUG] ai/forceRestartEngine: Re-initializing engine...')
+    
+    // Re-initialize engine
+    try {
+      await dispatch('initEngine', true)
+      console.log('[DEBUG] ai/forceRestartEngine: Engine restarted successfully')
+      commit('addMessage', 'AI engine has been restarted successfully.')
+      return true
+    } catch (error) {
+      console.error('[ERROR] ai/forceRestartEngine: Failed to restart engine:', error)
+      commit('addMessage', 'Failed to restart AI engine. Please reload the page.')
+      return false
+    }
   },
   reloadConfig({ commit, state, rootState }) {
     if (rootState.settings.configIndex == state.currentConfig) return
