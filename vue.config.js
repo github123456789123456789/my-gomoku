@@ -55,7 +55,7 @@ module.exports = {
   // 루트 도메인(username.github.io)을 사용한다면 '/'
   publicPath: process.env.NODE_ENV === 'production'
   ? '/my-gomoku/'  // 님의 깃허브 저장소 이름
-  : '/'
+  : '/',
 
   pwa: {
     name: 'Rapfi',
